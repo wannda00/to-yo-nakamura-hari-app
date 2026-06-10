@@ -85,11 +85,15 @@ export default function App() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex-1 flex flex-col items-center py-2 gap-0.5 transition-colors ${
-              tab === t.id ? 'text-[#3C2E1D]' : 'text-gray-400'
-            }`}
+            className="flex-1 flex flex-col items-center justify-center py-3 transition-colors active:opacity-60"
           >
-            <span className="text-xs font-medium">{t.label}</span>
+            <span
+              className="text-sm font-bold px-4 py-1.5 rounded-full transition-all"
+              style={tab === t.id
+                ? { background: '#3C2E1D', color: 'white' }
+                : { color: '#9ca3af' }
+              }
+            >{t.label}</span>
           </button>
         ))}
       </nav>
