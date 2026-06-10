@@ -266,7 +266,6 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
                           stroke="#3C2E1D"
                           strokeWidth={2}
                           strokeDasharray="3 3"
-                          label={{ value: '施', position: 'top', fontSize: 10, fill: '#3C2E1D' }}
                         />
                       ))}
                       <Area
