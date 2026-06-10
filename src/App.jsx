@@ -111,16 +111,6 @@ export default function App() {
                 : { color: '#a0856e' }
               }
             >{t.label}</span>
-            {t.id === 'log' && hasUnsaved && (
-              <span
-                className="absolute top-3 right-[calc(50%-28px)]"
-                style={{
-                  width: 8, height: 8, borderRadius: '50%',
-                  background: '#ef4444',
-                  boxShadow: '0 0 0 2px #f5ede4',
-                }}
-              />
-            )}
           </button>
         ))}
       </nav>
