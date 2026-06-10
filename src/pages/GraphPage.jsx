@@ -181,10 +181,10 @@ export default function GraphPage({ symptoms, records, treatmentDates = [], onGo
   }
 
   return (
-    <div className="flex flex-col overflow-hidden bg-gray-50" style={{ height: '100%' }}>
+    <div className="h-full overflow-y-auto bg-gray-50">
 
-      {/* ── 症状チップ（複数選択可） ── */}
-      <div className="flex-shrink-0 px-3 pt-3 pb-2">
+      {/* ── 症状チップ ── */}
+      <div className="px-3 pt-3 pb-2">
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
           {symptoms.map(s => (
             <button
@@ -204,18 +204,14 @@ export default function GraphPage({ symptoms, records, treatmentDates = [], onGo
       </div>
 
       {/* ── 期間タブ ── */}
-      <div className="flex-shrink-0 px-3 pb-2">
+      <div className="px-3 pb-2">
         <div className="flex gap-1 bg-white rounded-xl p-0.5 shadow-sm border border-gray-100">
           {RANGE_OPTIONS.map(opt => (
             <button
               key={opt.days}
               onClick={() => setRange(opt.days)}
               className="flex-1 py-1.5 rounded-[10px] text-xs font-semibold transition-all"
-              style={
-                range === opt.days
-                  ? { background: '#3C2E1D', color: 'white' }
-                  : { color: '#9ca3af' }
-              }
+              style={range === opt.days ? { background: '#3C2E1D', color: 'white' } : { color: '#9ca3af' }}
             >
               {opt.label}
             </button>
@@ -225,7 +221,7 @@ export default function GraphPage({ symptoms, records, treatmentDates = [], onGo
 
       {/* ── 統計 ── */}
       {isSingle && singleStats?.firstTrend !== null && (
-        <div className="flex-shrink-0 px-3 pb-2">
+        <div className="px-3 pb-2">
           <div className="bg-white rounded-xl px-3 py-1.5 shadow-sm border border-gray-100 flex items-center justify-center gap-2">
             <span className="text-[10px] text-gray-400 font-semibold whitespace-nowrap">初回比</span>
             <span className="text-sm font-black" style={{ color: trendColor(singleStats.firstTrend) }}>
@@ -238,7 +234,7 @@ export default function GraphPage({ symptoms, records, treatmentDates = [], onGo
         </div>
       )}
       {!isSingle && multiStats && (
-        <div className="flex-shrink-0 px-3 pb-2">
+        <div className="px-3 pb-2">
           <div className="bg-white rounded-xl px-3 py-2 shadow-sm border border-gray-100 flex flex-wrap gap-x-4 gap-y-1 justify-center">
             {multiStats.map(({ symptom: s, latest, firstTrend }) => (
               <span key={s.id} className="flex items-center gap-1.5 text-[11px]">
@@ -257,137 +253,89 @@ export default function GraphPage({ symptoms, records, treatmentDates = [], onGo
         </div>
       )}
 
-      {/* ── グラフ ── */}
-      <div className={showList ? 'flex-shrink-0 px-3 pb-2' : 'flex-1 min-h-0 px-3 pb-2'}
-           style={showList ? { height: 210 } : {}}>
+      {/* ── グラフ（大きく） ── */}
+      <div className="px-3 pb-3" style={{ minHeight: 'calc(100svh - 260px)', height: 'calc(100svh - 260px)' }}>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 h-full flex flex-col p-3">
-
-            {/* 凡例 */}
-            <div className="flex-shrink-0 flex items-center gap-3 mb-2 flex-wrap">
-              {selectedSymptoms.map(s => (
-                <span key={s.id} className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
-                  <span className="text-xs font-semibold text-gray-700">{s.name}</span>
-                </span>
-              ))}
-              <span className="text-[10px] text-gray-400 ml-auto">VAS 0–10</span>
-              {isSingle && singleStats?.avg !== null && (
-                <span className="flex items-center gap-1 text-[10px]" style={{ color: singleSymptom.color }}>
-                  <span className="inline-block w-3 border-t-2 border-dashed" style={{ borderColor: singleSymptom.color, opacity: 0.7 }} />
-                  平均
-                </span>
-              )}
-              {visibleTreatmentMarkers.length > 0 && (
-                <span className="flex items-center gap-1 text-[10px] text-[#3C2E1D]">
-                  <span className="inline-block w-3 border-t-2 border-dashed border-[#3C2E1D]" />
-                  施術日
-                </span>
-              )}
-            </div>
-
-            {/* チャート本体 */}
-            <div className="flex-1 min-h-0">
-              {chartData.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-gray-300">
-                  <span className="text-sm">この期間にデータがありません</span>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 16, right: 8, left: -24, bottom: 0 }}>
-                    <defs>
-                      {selectedSymptoms.map(s => (
-                        <linearGradient key={s.id} id={`grad-${s.id}`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%"  stopColor={s.color} stopOpacity={0.25} />
-                          <stop offset="95%" stopColor={s.color} stopOpacity={0} />
-                        </linearGradient>
-                      ))}
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                    <XAxis
-                      dataKey="date"
-                      tick={{ fontSize: 10, fill: '#9ca3af' }}
-                      tickLine={false}
-                      axisLine={false}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis
-                      domain={[0, 10]}
-                      ticks={[0, 2.5, 5, 7.5, 10]}
-                      tickFormatter={v => v.toFixed(1)}
-                      tick={{ fontSize: 10, fill: '#9ca3af' }}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    {isSingle && singleStats?.avg !== null && (
-                      <ReferenceLine
-                        y={singleStats.avg}
-                        stroke={singleSymptom.color}
-                        strokeDasharray="4 3"
-                        strokeOpacity={0.75}
-                        strokeWidth={1.5}
-                        label={{ value: `平均 ${singleStats.avg.toFixed(1)}`, position: 'insideTopRight', fontSize: 10, fill: singleSymptom.color, opacity: 0.85 }}
-                      />
-                    )}
-                    {visibleTreatmentMarkers.map(({ xLabel, num }) => (
-                      <ReferenceLine
-                        key={xLabel}
-                        x={xLabel}
-                        stroke="#3C2E1D"
-                        strokeWidth={1.5}
-                        strokeDasharray="3 3"
-                        strokeOpacity={0.7}
-                        label={({ viewBox }) => (
-                          <g>
-                            <rect x={viewBox.x - 9} y={viewBox.y + 2} width={18} height={15} fill="white" rx={3} />
-                            <text x={viewBox.x} y={viewBox.y + 13} textAnchor="middle" fontSize={11} fill="#3C2E1D" fontWeight="bold">
-                              {num}
-                            </text>
-                          </g>
-                        )}
-                      />
-                    ))}
+          {/* 凡例 */}
+          <div className="flex-shrink-0 flex items-center gap-3 mb-2 flex-wrap">
+            {selectedSymptoms.map(s => (
+              <span key={s.id} className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+                <span className="text-xs font-semibold text-gray-700">{s.name}</span>
+              </span>
+            ))}
+            <span className="text-[10px] text-gray-400 ml-auto">VAS 0–10</span>
+            {isSingle && singleStats?.avg !== null && (
+              <span className="flex items-center gap-1 text-[10px]" style={{ color: singleSymptom.color }}>
+                <span className="inline-block w-3 border-t-2 border-dashed" style={{ borderColor: singleSymptom.color, opacity: 0.7 }} />
+                平均
+              </span>
+            )}
+            {visibleTreatmentMarkers.length > 0 && (
+              <span className="flex items-center gap-1 text-[10px] text-[#3C2E1D]">
+                <span className="inline-block w-3 border-t-2 border-dashed border-[#3C2E1D]" />
+                施術日
+              </span>
+            )}
+          </div>
+          {/* チャート本体 */}
+          <div className="flex-1 min-h-0">
+            {chartData.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-gray-300">
+                <span className="text-sm">この期間にデータがありません</span>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 16, right: 8, left: -24, bottom: 0 }}>
+                  <defs>
                     {selectedSymptoms.map(s => (
-                      <Area
-                        key={s.id}
-                        type="monotone"
-                        dataKey={`v_${s.id}`}
-                        stroke={s.color}
-                        strokeWidth={2.5}
-                        fill={`url(#grad-${s.id})`}
-                        connectNulls={true}
-                        dot={(props) => {
-                          if (props.value == null) return null
-                          return <circle key={`d-${s.id}-${props.index}`} cx={props.cx} cy={props.cy} r={3.5} fill={s.color} stroke="white" strokeWidth={2} />
-                        }}
-                        activeDot={(props) => {
-                          if (props.value == null) return null
-                          return <circle key={`ad-${s.id}-${props.index}`} cx={props.cx} cy={props.cy} r={6} fill={s.color} stroke="white" strokeWidth={2} />
-                        }}
-                      />
+                      <linearGradient key={s.id} id={`grad-${s.id}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor={s.color} stopOpacity={0.25} />
+                        <stop offset="95%" stopColor={s.color} stopOpacity={0} />
+                      </linearGradient>
                     ))}
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                  <YAxis domain={[0, 10]} ticks={[0, 2.5, 5, 7.5, 10]} tickFormatter={v => v.toFixed(1)} tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} />
+                  {isSingle && singleStats?.avg !== null && (
+                    <ReferenceLine y={singleStats.avg} stroke={singleSymptom.color} strokeDasharray="4 3" strokeOpacity={0.75} strokeWidth={1.5}
+                      label={{ value: `平均 ${singleStats.avg.toFixed(1)}`, position: 'insideTopRight', fontSize: 10, fill: singleSymptom.color, opacity: 0.85 }} />
+                  )}
+                  {visibleTreatmentMarkers.map(({ xLabel, num }) => (
+                    <ReferenceLine key={xLabel} x={xLabel} stroke="#3C2E1D" strokeWidth={1.5} strokeDasharray="3 3" strokeOpacity={0.7}
+                      label={({ viewBox }) => (
+                        <g>
+                          <rect x={viewBox.x - 9} y={viewBox.y + 2} width={18} height={15} fill="white" rx={3} />
+                          <text x={viewBox.x} y={viewBox.y + 13} textAnchor="middle" fontSize={11} fill="#3C2E1D" fontWeight="bold">{num}</text>
+                        </g>
+                      )} />
+                  ))}
+                  {selectedSymptoms.map(s => (
+                    <Area key={s.id} type="monotone" dataKey={`v_${s.id}`} stroke={s.color} strokeWidth={2.5} fill={`url(#grad-${s.id})`} connectNulls={true}
+                      dot={(props) => props.value == null ? null : <circle key={`d-${s.id}-${props.index}`} cx={props.cx} cy={props.cy} r={3.5} fill={s.color} stroke="white" strokeWidth={2} />}
+                      activeDot={(props) => props.value == null ? null : <circle key={`ad-${s.id}-${props.index}`} cx={props.cx} cy={props.cy} r={6} fill={s.color} stroke="white" strokeWidth={2} />}
+                    />
+                  ))}
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
+      </div>
 
-      {/* ── 記録一覧 + 改善ランキング ── */}
-      {(listData.length > 0 || improvementRanking.length > 0) && (
-        <div className={showList ? 'flex-1 min-h-0 px-3 pb-3 flex flex-col' : 'flex-shrink-0 px-3 pb-3'}>
-          {listData.length > 0 && (
+      {/* ── 記録一覧 + 改善ランキング（スクロールで出現） ── */}
+      <div className="px-3 pb-6 flex flex-col gap-2">
+        {listData.length > 0 && (
+          <>
             <button
               onClick={() => setShowList(v => !v)}
-              className="flex-shrink-0 w-full flex items-center justify-between px-4 py-2 bg-white rounded-2xl shadow-sm border border-gray-100 text-sm font-semibold text-gray-500"
+              className="w-full flex items-center justify-between px-4 py-2 bg-white rounded-2xl shadow-sm border border-gray-100 text-sm font-semibold text-gray-500"
             >
               <span>記録一覧（{listData.length}件）</span>
               <span className="text-[11px] text-gray-400">{showList ? '▲ 閉じる' : '▼ 開く'}</span>
             </button>
-          )}
-
-          {/* リスト開放時：レコード＋ランキングをひとつのスクロール領域に */}
-          {showList && (
-            <div className="flex-1 min-h-0 mt-1 overflow-y-auto flex flex-col gap-2">
+            {showList && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
                 {[...listData].reverse().map((d, i) => {
                   const isExpanded = expandedNote === d.fullDate
@@ -440,8 +388,7 @@ export default function GraphPage({ symptoms, records, treatmentDates = [], onGo
                       </div>
                       {d.note && isExpanded && (
                         <div className="px-4 pb-3 -mt-0.5">
-                          <p className="text-xs leading-relaxed rounded-xl px-3 py-2"
-                            style={{ background: '#fdf8f3', color: '#7a5c42' }}>
+                          <p className="text-xs leading-relaxed rounded-xl px-3 py-2" style={{ background: '#fdf8f3', color: '#7a5c42' }}>
                             {d.note}
                           </p>
                         </div>
@@ -450,18 +397,11 @@ export default function GraphPage({ symptoms, records, treatmentDates = [], onGo
                   )
                 })}
               </div>
-              {improvementRanking.length > 0 && <RankingCard ranking={improvementRanking} range={range} />}
-            </div>
-          )}
-
-          {/* リスト閉鎖時：ランキングをそのまま下に表示 */}
-          {!showList && improvementRanking.length > 0 && (
-            <div className="mt-2">
-              <RankingCard ranking={improvementRanking} range={range} />
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </>
+        )}
+        {improvementRanking.length > 0 && <RankingCard ranking={improvementRanking} range={range} />}
+      </div>
     </div>
   )
 }
