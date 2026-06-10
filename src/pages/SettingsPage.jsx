@@ -81,12 +81,11 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
                 <button
                   onClick={handleAddFreeInput}
                   disabled={!input.trim()}
-                  className="px-4 py-2.5 text-white text-sm font-bold rounded-xl disabled:opacity-30 transition-all active:scale-95"
-                  style={{
-                    background: input.trim()
-                      ? '#3C2E1D'
-                      : '#e5e7eb',
-                  }}
+                  className="px-4 py-2.5 text-sm font-bold rounded-xl transition-all active:scale-95"
+                  style={input.trim()
+                    ? { background: '#3C2E1D', color: 'white' }
+                    : { background: '#f5ede4', color: '#a0856e', border: '1.5px solid #e8d9cc' }
+                  }
                 >
                   追加
                 </button>
@@ -113,9 +112,7 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
                         border: 'none',
                         transform: isAnim ? 'scale(0.88)' : 'scale(1)',
                         transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, box-shadow 0.2s, color 0.2s',
-                        background: isAdded
-                          ? '#3C2E1D'
-                          : '#f9fafb',
+                        background: isAdded ? '#3C2E1D' : '#f9fafb',
                         color: isAdded ? 'white' : '#6b7280',
                         boxShadow: isAdded ? '0 2px 10px rgba(102,126,234,0.4)' : 'none',
                         outline: isAdded ? 'none' : '1.5px solid #e5e7eb',
