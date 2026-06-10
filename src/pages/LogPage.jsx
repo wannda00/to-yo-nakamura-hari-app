@@ -56,7 +56,7 @@ function SymptomCard({ symptom, value, touched, onChange }) {
           )}
         </div>
         <VASSlider value={value} touched={touched} color={symptom.color} onChange={onChange} />
-        <div className="flex justify-between mt-0.5">
+        <div className="flex justify-between -mt-1">
           <span className="text-[9px] text-gray-400">症状なし</span>
           <span className="text-[9px] text-gray-400">困ってる</span>
           <span className="text-[9px] text-gray-400">人生で最もつらい</span>

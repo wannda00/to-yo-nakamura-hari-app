@@ -15,14 +15,9 @@ const PRESET_SYMPTOMS = [
   'イライラする', '落ち込みやすい',
 ]
 
-function DragHandle({ listeners, attributes }) {
+function DragHandle() {
   return (
-    <span
-      {...listeners}
-      {...attributes}
-      className="flex-shrink-0 flex items-center justify-center w-10 h-10 -ml-1.5 rounded-xl text-gray-300 active:text-gray-500 cursor-grab active:cursor-grabbing"
-      style={{ touchAction: 'none' }}
-    >
+    <span className="flex-shrink-0 flex items-center justify-center w-10 h-10 -ml-1.5 rounded-xl text-gray-300 pointer-events-none">
       <svg width="16" height="16" viewBox="0 0 14 14" fill="currentColor">
         <circle cx="4.5" cy="3"  r="1.3"/><circle cx="9.5" cy="3"  r="1.3"/>
         <circle cx="4.5" cy="7"  r="1.3"/><circle cx="9.5" cy="7"  r="1.3"/>
@@ -38,6 +33,8 @@ function SortableSymptomRow({ s, confirmId, colorPickerId, setConfirmId, setColo
   return (
     <div
       ref={setNodeRef}
+      {...attributes}
+      {...listeners}
       style={{
         transform: isDragging
           ? `${CSS.Transform.toString(transform)} scale(1.04)`
@@ -48,14 +45,16 @@ function SortableSymptomRow({ s, confirmId, colorPickerId, setConfirmId, setColo
         background: isDragging ? '#fdf8f3' : 'white',
         boxShadow: isDragging ? '0 8px 28px rgba(0,0,0,0.13)' : 'none',
         borderRadius: isDragging ? 14 : 0,
+        touchAction: 'none',
+        userSelect: 'none',
       }}
       className="border-b border-gray-50 last:border-0"
     >
       <div className="flex items-center px-3 py-3 gap-2">
-        <DragHandle listeners={listeners} attributes={attributes} />
+        <DragHandle />
         {/* 色変更ボタン */}
         <button
-          onPointerDown={e => e.preventDefault()}
+          onPointerDown={e => e.stopPropagation()}
           onClick={() => setColorPickerId(colorPickerId === s.id ? null : s.id)}
           className="flex-shrink-0 w-5 h-5 rounded-full transition-all active:scale-90"
           style={{
@@ -68,7 +67,7 @@ function SortableSymptomRow({ s, confirmId, colorPickerId, setConfirmId, setColo
         <span className="flex-1 text-sm font-medium text-gray-800">{s.name}</span>
         {/* 削除 */}
         {confirmId === s.id ? (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5" onPointerDown={e => e.stopPropagation()}>
             <button
               onClick={() => { removeSymptom(s.id); setConfirmId(null); setColorPickerId(null) }}
               className="text-xs text-red-500 font-bold px-2.5 py-1 bg-red-50 border border-red-200 rounded-lg"
@@ -80,6 +79,7 @@ function SortableSymptomRow({ s, confirmId, colorPickerId, setConfirmId, setColo
           </div>
         ) : (
           <button
+            onPointerDown={e => e.stopPropagation()}
             onClick={() => { setConfirmId(s.id); setColorPickerId(null) }}
             className="text-gray-300 hover:text-red-400 transition-colors p-1 text-base"
           >✕</button>
@@ -87,11 +87,10 @@ function SortableSymptomRow({ s, confirmId, colorPickerId, setConfirmId, setColo
       </div>
       {/* カラーピッカー */}
       {colorPickerId === s.id && (
-        <div className="px-4 py-2.5 flex flex-wrap gap-2.5" style={{ background: '#fafafa' }}>
+        <div className="px-4 py-2.5 flex flex-wrap gap-2.5" style={{ background: '#fafafa' }} onPointerDown={e => e.stopPropagation()}>
           {COLORS.map(c => (
             <button
               key={c}
-              onPointerDown={e => e.preventDefault()}
               onClick={() => { updateSymptomColor(s.id, c); setColorPickerId(null) }}
               className="w-7 h-7 rounded-full transition-all active:scale-90"
               style={{ background: c, boxShadow: s.color === c ? `0 0 0 2px white, 0 0 0 4px ${c}` : 'none' }}
@@ -115,7 +114,7 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, upda
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } })
   )
 
   function handleDragEnd({ active, over }) {

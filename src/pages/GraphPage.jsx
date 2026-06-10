@@ -124,6 +124,20 @@ export default function GraphPage({ symptoms, records, treatmentDates = [], onGo
     return { symptom: s, latest, firstTrend }
   }) : null
 
+  // Improvement ranking (all symptoms, current range, needs ≥2 records)
+  const improvementRanking = symptoms
+    .map(s => {
+      const rangeRecs = records
+        .filter(r => (!cutoff || r.date >= cutoff) && r.entries.some(e => e.symptomId === s.id))
+        .sort((a, b) => a.date.localeCompare(b.date))
+      const vals = rangeRecs.map(r => r.entries.find(e => e.symptomId === s.id)?.value).filter(v => v != null)
+      if (vals.length < 2) return null
+      const delta = Math.round((vals[vals.length - 1] - vals[0]) * 10) / 10
+      return { symptom: s, delta, startVal: vals[0], endVal: vals[vals.length - 1] }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.delta - b.delta)
+
   const sortedAllTreatments = [...treatmentDates].sort()
   const visibleTreatmentMarkers = treatmentDatesInRange.map(d => ({
     xLabel: formatDateShort(d),
@@ -408,6 +422,34 @@ export default function GraphPage({ symptoms, records, treatmentDates = [], onGo
                   </div>
                 )
               })}
+
+              {/* ── 改善ランキング ── */}
+              {improvementRanking.length > 0 && (
+                <div className="px-4 pt-3 pb-4" style={{ background: '#fafafa', borderTop: '1px solid #f3f4f6' }}>
+                  <p className="text-xs font-bold text-gray-500 mb-2.5">
+                    改善ランキング
+                    <span className="ml-1.5 font-normal text-gray-400">
+                      （{RANGE_OPTIONS.find(o => o.days === range)?.label ?? '全期間'}）
+                    </span>
+                  </p>
+                  {improvementRanking.map((item, i) => (
+                    <div key={item.symptom.id} className="flex items-center gap-2 py-1.5">
+                      <span className="text-[11px] font-black w-5 text-right tabular-nums"
+                        style={{ color: i === 0 ? '#f59e0b' : i === 1 ? '#9ca3af' : i === 2 ? '#cd7c4e' : '#d1d5db' }}>
+                        {i + 1}
+                      </span>
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: item.symptom.color }} />
+                      <span className="flex-1 text-sm text-gray-700 truncate">{item.symptom.name}</span>
+                      <span className="text-xs font-bold tabular-nums" style={{ color: trendColor(item.delta) }}>
+                        {trendLabel(item.delta)}
+                      </span>
+                      <span className="text-[10px] w-10 text-right" style={{ color: trendColor(item.delta) }}>
+                        {item.delta < 0 ? '改善' : item.delta > 0 ? '悪化' : '変化なし'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
