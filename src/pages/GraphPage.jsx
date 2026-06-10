@@ -276,7 +276,7 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
                         fill={`url(#grad-${symptom.id})`}
                         dot={{ fill: symptom.color, r: 3.5, strokeWidth: 2, stroke: 'white' }}
                         activeDot={{ r: 6, stroke: 'white', strokeWidth: 2 }}
-                        connectNulls={false}
+                        connectNulls={true}
                       />
                     </AreaChart>
                   </ResponsiveContainer>

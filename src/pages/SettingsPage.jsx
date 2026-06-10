@@ -189,8 +189,8 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
             データのバックアップ
           </p>
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
-              <p className="text-xs text-blue-700 leading-relaxed">
+            <div className="px-4 py-3 border-b" style={{ background: '#fdf8f3', borderColor: '#e8d9cc' }}>
+              <p className="text-xs leading-relaxed" style={{ color: '#7a5c42' }}>
                 スマートフォンの機種変更や故障に備え、定期的にデータをエクスポートして保存しておくことをおすすめします。
               </p>
             </div>
