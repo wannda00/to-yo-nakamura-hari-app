@@ -15,13 +15,15 @@ const RANGE_OPTIONS = [
   { label: '全期間', days: 0 },
 ]
 
+const CIRCLED = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩',
+                 '⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳']
+
 function trendColor(v) {
   return v > 0 ? '#ef4444' : v < 0 ? '#22c55e' : '#9ca3af'
 }
 function trendLabel(v) {
   return v > 0 ? `▲+${v.toFixed(1)}` : v < 0 ? `▼${v.toFixed(1)}` : '→±0'
 }
-
 
 export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
   const [selectedId, setSelectedId] = useState(symptoms[0]?.id || null)
@@ -36,30 +38,43 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
     return d.toISOString().slice(0, 10)
   })()
 
-  const chartData = records
-    .filter(r => {
-      if (cutoff && r.date < cutoff) return false
-      return r.entries.some(e => e.symptomId === selectedId)
-    })
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .map(r => ({
-      date: formatDateShort(r.date),
-      fullDate: r.date,
-      value: r.entries.find(e => e.symptomId === selectedId)?.value ?? null,
-    }))
+  // ── 症状スコアと施術日を完全分離して統合 ──
+  const symptomDates = records
+    .filter(r => (!cutoff || r.date >= cutoff) && r.entries.some(e => e.symptomId === selectedId))
+    .map(r => r.date)
 
-  const visibleTreatments = treatmentDates
-    .filter(d => !cutoff || d >= cutoff)
-    .map(d => formatDateShort(d))
-    .filter(label => chartData.some(c => c.date === label))
+  const treatmentDatesInRange = [...treatmentDates].filter(d => !cutoff || d >= cutoff).sort()
 
+  // 統合タイムライン（症状データのない施術日は value: null）
+  const allDates = [...new Set([...symptomDates, ...treatmentDatesInRange])].sort()
+
+  const chartData = allDates.map(d => {
+    const rec = records.find(r => r.date === d)
+    return {
+      date: formatDateShort(d),
+      fullDate: d,
+      value: rec?.entries.find(e => e.symptomId === selectedId)?.value ?? null,
+    }
+  })
+
+  // 症状スコアがある行のみ（記録一覧・統計用）
+  const symptomData = chartData.filter(d => d.value !== null)
+
+  // 施術日マーカー：全施術日を時系列で番号付け、範囲内のものを表示
+  const sortedAllTreatments = [...treatmentDates].sort()
+  const visibleTreatmentMarkers = treatmentDatesInRange.map(d => ({
+    xLabel: formatDateShort(d),
+    num: CIRCLED[sortedAllTreatments.indexOf(d)] ?? `(${sortedAllTreatments.indexOf(d) + 1})`,
+  }))
+
+  // ── 統計 ──
   const allValues = records
     .filter(r => r.entries.some(e => e.symptomId === selectedId))
     .sort((a, b) => a.date.localeCompare(b.date))
     .map(r => r.entries.find(e => e.symptomId === selectedId)?.value ?? null)
     .filter(v => v !== null)
 
-  const values = chartData.map(d => d.value).filter(v => v !== null)
+  const values = symptomData.map(d => d.value)
   const avg = values.length ? Math.round((values.reduce((s, v) => s + v, 0) / values.length) * 10) / 10 : null
   const latest = values[values.length - 1] ?? null
   const firstVal = allValues[0] ?? null
@@ -126,7 +141,6 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
             </div>
           </div>
 
-
           {/* ── 施術統計 ── */}
           {treatmentCount > 0 && (
             <div className="flex-shrink-0 px-3 pb-2 flex gap-2">
@@ -179,7 +193,7 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
                     平均
                   </span>
                 )}
-                {visibleTreatments.length > 0 && (
+                {visibleTreatmentMarkers.length > 0 && (
                   <span className="flex items-center gap-1 text-[10px] text-[#3C2E1D]">
                     <span className="inline-block w-3 border-t-2 border-dashed border-[#3C2E1D]" />
                     施術日
@@ -195,7 +209,7 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
+                    <AreaChart data={chartData} margin={{ top: 16, right: 8, left: -24, bottom: 0 }}>
                       <defs>
                         <linearGradient id={`grad-${symptom.id}`} x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%"  stopColor={symptom.color} stopOpacity={0.25} />
@@ -228,13 +242,16 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
                           label={{ value: `平均 ${avg.toFixed(1)}`, position: 'insideTopRight', fontSize: 10, fill: symptom.color, opacity: 0.85 }}
                         />
                       )}
-                      {visibleTreatments.map(label => (
+                      {/* 施術日マーカー：症状データと完全分離、①②③ 番号付き */}
+                      {visibleTreatmentMarkers.map(({ xLabel, num }) => (
                         <ReferenceLine
-                          key={label}
-                          x={label}
+                          key={xLabel}
+                          x={xLabel}
                           stroke="#3C2E1D"
-                          strokeWidth={2}
+                          strokeWidth={1.5}
                           strokeDasharray="3 3"
+                          strokeOpacity={0.7}
+                          label={{ value: num, position: 'insideTop', fontSize: 11, fill: '#3C2E1D', fontWeight: 'bold' }}
                         />
                       ))}
                       <Area
@@ -243,9 +260,15 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
                         stroke={symptom.color}
                         strokeWidth={2.5}
                         fill={`url(#grad-${symptom.id})`}
-                        dot={{ fill: symptom.color, r: 3.5, strokeWidth: 2, stroke: 'white' }}
-                        activeDot={{ r: 6, stroke: 'white', strokeWidth: 2 }}
                         connectNulls={true}
+                        dot={(props) => {
+                          if (props.value == null) return null
+                          return <circle key={`d-${props.index}`} cx={props.cx} cy={props.cy} r={3.5} fill={symptom.color} stroke="white" strokeWidth={2} />
+                        }}
+                        activeDot={(props) => {
+                          if (props.value == null) return null
+                          return <circle key={`ad-${props.index}`} cx={props.cx} cy={props.cy} r={6} fill={symptom.color} stroke="white" strokeWidth={2} />
+                        }}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -254,19 +277,19 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
             </div>
           </div>}
 
-          {/* ── 記録一覧（折りたたみ） ── */}
-          {chartData.length > 0 && (
+          {/* ── 記録一覧（症状スコアがある日のみ） ── */}
+          {symptomData.length > 0 && (
             <div className={showList ? 'flex-1 min-h-0 px-3 pb-3 flex flex-col' : 'flex-shrink-0 px-3 pb-3'}>
               <button
                 onClick={() => setShowList(v => !v)}
                 className="flex-shrink-0 w-full flex items-center justify-between px-4 py-2 bg-white rounded-2xl shadow-sm border border-gray-100 text-sm font-semibold text-gray-500"
               >
-                <span>記録一覧（{chartData.length}件）</span>
+                <span>記録一覧（{symptomData.length}件）</span>
                 <span className="text-[11px] text-gray-400">{showList ? '▲ 閉じる' : '▼ 開く'}</span>
               </button>
               {showList && (
                 <div className="flex-1 min-h-0 mt-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-y-auto">
-                  {[...chartData].reverse().map((d, i) => (
+                  {[...symptomData].reverse().map((d, i) => (
                     <div key={i} className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50 last:border-0">
                       <span className="text-sm text-gray-600">{d.fullDate}</span>
                       <div className="flex items-center gap-3">
