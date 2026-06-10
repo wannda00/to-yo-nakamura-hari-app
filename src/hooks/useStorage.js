@@ -26,7 +26,7 @@ export function useSymptoms() {
       const usedColors = prev.map(s => s.color)
       const unused = COLORS.filter(c => !usedColors.includes(c))
       const color = unused.length > 0 ? unused[0] : COLORS[prev.length % COLORS.length]
-      const next = { id: Date.now().toString(), name: name.trim(), color }
+      const next = { id: crypto.randomUUID(), name: name.trim(), color }
       const updated = [...prev, next]
       save('symptoms', updated)
       return updated

@@ -90,7 +90,6 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
   if (symptoms.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-2">
-        <span className="text-5xl">⚙️</span>
         <span className="text-sm">設定タブで症状を追加してください</span>
       </div>
     )
@@ -242,7 +241,6 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
               <div className="flex-1 min-h-0">
                 {chartData.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-gray-300">
-                    <span className="text-4xl mb-2">📉</span>
                     <span className="text-sm">この期間にデータがありません</span>
                   </div>
                 ) : (

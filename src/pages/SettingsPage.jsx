@@ -149,7 +149,6 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             {symptoms.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-gray-300 gap-2">
-                <span className="text-4xl">🩺</span>
                 <span className="text-sm text-gray-400">症状がまだ登録されていません</span>
                 <span className="text-xs text-gray-300">上のフォームから追加してください</span>
               </div>
@@ -207,7 +206,7 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
             <div className="px-4 py-4 border-b border-gray-50">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-bold text-gray-800">📤 エクスポート</p>
+                  <p className="text-sm font-bold text-gray-800">エクスポート</p>
                   <p className="text-xs text-gray-500 mt-0.5">全データをJSONファイルで保存</p>
                 </div>
                 <button
@@ -223,7 +222,7 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
             <div className="px-4 py-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-bold text-gray-800">📥 インポート</p>
+                  <p className="text-sm font-bold text-gray-800">インポート</p>
                   <p className="text-xs text-gray-500 mt-0.5">バックアップファイルからデータを復元</p>
                 </div>
                 <button

@@ -6,9 +6,9 @@ import SettingsPage from './pages/SettingsPage'
 import OnboardingPage from './pages/OnboardingPage'
 
 const TABS = [
-  { id: 'log', label: '記録', icon: '✏️' },
-  { id: 'graph', label: 'グラフ', icon: '📈' },
-  { id: 'settings', label: '設定', icon: '⚙️' },
+  { id: 'log', label: '記録' },
+  { id: 'graph', label: 'グラフ' },
+  { id: 'settings', label: '設定' },
 ]
 
 export default function App() {
@@ -89,7 +89,6 @@ export default function App() {
               tab === t.id ? 'text-[#3C2E1D]' : 'text-gray-400'
             }`}
           >
-            <span className="text-xl">{t.icon}</span>
             <span className="text-xs font-medium">{t.label}</span>
           </button>
         ))}

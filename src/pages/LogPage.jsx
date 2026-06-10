@@ -134,9 +134,9 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
           <h1 className="text-white font-bold text-xl">症状を記録する</h1>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-5 py-16">
-          <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl"
+          <div className="w-20 h-20 rounded-full flex items-center justify-center"
             style={{ background: '#3C2E1D12' }}>
-            🩺
+            <span className="w-8 h-8 rounded-full border-2" style={{ borderColor: '#3C2E1D40' }} />
           </div>
           <div>
             <p className="font-bold text-gray-700 text-lg mb-1">症状がまだ登録されていません</p>
@@ -149,7 +149,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
             className="px-6 py-3 rounded-2xl text-white font-bold text-sm active:scale-95 transition-all"
             style={{ background: '#3C2E1D' }}
           >
-            ⚙️　症状を設定する
+            症状を設定する
           </button>
         </div>
       </div>
@@ -220,7 +220,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
         >
           <div className="px-4 py-3.5 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-base">🗓</span>
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#3C2E1D' }} />
               <div>
                 <p className="font-semibold text-gray-800 text-sm">施術日</p>
                 <p className="text-[11px] text-gray-400">この日に施術を受けた</p>
@@ -271,7 +271,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
         ))}
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 pt-3 pb-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">📝 メモ（任意）</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">メモ（任意）</label>
           <textarea
             value={note}
             onChange={e => { setNote(e.target.value); setSaved(false) }}

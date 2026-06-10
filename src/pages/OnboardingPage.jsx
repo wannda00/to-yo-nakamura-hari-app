@@ -50,7 +50,7 @@ function StepWelcome({ onNext }) {
           className="w-full px-4 py-3.5 rounded-2xl border text-left"
           style={{ background: '#fdf8f3', borderColor: `${BRAND}20` }}
         >
-          <p className="text-xs font-bold mb-1" style={{ color: BRAND }}>🔒 プライバシーについて</p>
+          <p className="text-xs font-bold mb-1" style={{ color: BRAND }}>プライバシーについて</p>
           <p className="text-xs leading-relaxed" style={{ color: BRAND_SUB }}>
             記録はすべてこの端末の中だけに保存されます。院や第三者にデータが送信されることは一切ありません。
           </p>
@@ -160,13 +160,6 @@ function StepDone({ count, onComplete }) {
   return (
     <div className="flex flex-col h-full px-7 pt-12 pb-10">
       <div className="flex-1 flex flex-col items-center justify-center gap-7">
-        <div
-          className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
-          style={{ background: `${BRAND}12` }}
-        >
-          🎉
-        </div>
-
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">準備できました！</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
@@ -177,16 +170,15 @@ function StepDone({ count, onComplete }) {
 
         <div className="w-full space-y-3">
           {[
-            { icon: '✏️', tab: '記録タブ',  desc: 'スライダーを動かして今日の症状を入力' },
-            { icon: '📈', tab: 'グラフタブ', desc: '症状の変化をグラフで確認' },
-            { icon: '⚙️', tab: '設定タブ',  desc: '症状の追加・変更、データの保存' },
-          ].map(({ icon, tab, desc }) => (
+            { tab: '記録タブ',  desc: 'スライダーを動かして今日の症状を入力' },
+            { tab: 'グラフタブ', desc: '症状の変化をグラフで確認' },
+            { tab: '設定タブ',  desc: '症状の追加・変更、データの保存' },
+          ].map(({ tab, desc }) => (
             <div
               key={tab}
               className="flex items-center gap-3 px-4 py-3 rounded-2xl"
               style={{ background: `${BRAND}08`, border: `1px solid ${BRAND}15` }}
             >
-              <span className="text-xl flex-shrink-0">{icon}</span>
               <div>
                 <p className="text-sm font-bold" style={{ color: BRAND }}>{tab}</p>
                 <p className="text-xs text-gray-400">{desc}</p>
