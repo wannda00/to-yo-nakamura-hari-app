@@ -29,6 +29,7 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
   const [selectedId, setSelectedId] = useState(symptoms[0]?.id || null)
   const [range, setRange] = useState(90)
   const [showList, setShowList] = useState(false)
+  const [expandedNote, setExpandedNote] = useState(null)
 
   const symptom = symptoms.find(s => s.id === selectedId)
 
@@ -54,6 +55,7 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
       date: formatDateShort(d),
       fullDate: d,
       value: rec?.entries.find(e => e.symptomId === selectedId)?.value ?? null,
+      note: rec?.note || null,
     }
   })
 
@@ -270,19 +272,44 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
               </button>
               {showList && (
                 <div className="flex-1 min-h-0 mt-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-y-auto">
-                  {[...symptomData].reverse().map((d, i) => (
-                    <div key={i} className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50 last:border-0">
-                      <span className="text-sm text-gray-600">{d.fullDate}</span>
-                      <div className="flex items-center gap-3">
-                        <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div className="h-full rounded-full" style={{ width: `${(d.value / 10) * 100}%`, backgroundColor: symptom.color }} />
+                  {[...symptomData].reverse().map((d, i) => {
+                    const isExpanded = expandedNote === d.fullDate
+                    return (
+                      <div key={i} className="border-b border-gray-50 last:border-0">
+                        <div
+                          className="flex items-center justify-between px-4 py-2.5"
+                          onClick={() => d.note && setExpandedNote(isExpanded ? null : d.fullDate)}
+                          style={{ cursor: d.note ? 'pointer' : 'default' }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">{d.fullDate}</span>
+                            {d.note && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                                style={{ background: isExpanded ? '#3C2E1D18' : '#f3f4f6', color: isExpanded ? '#3C2E1D' : '#9ca3af' }}>
+                                メモ
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full" style={{ width: `${(d.value / 10) * 100}%`, backgroundColor: symptom.color }} />
+                            </div>
+                            <span className="text-sm font-black w-8 text-right tabular-nums" style={{ color: symptom.color }}>
+                              {d.value?.toFixed(1)}
+                            </span>
+                          </div>
                         </div>
-                        <span className="text-sm font-black w-8 text-right tabular-nums" style={{ color: symptom.color }}>
-                          {d.value?.toFixed(1)}
-                        </span>
+                        {d.note && isExpanded && (
+                          <div className="px-4 pb-3 -mt-0.5">
+                            <p className="text-xs text-gray-500 leading-relaxed rounded-xl px-3 py-2"
+                              style={{ background: '#fdf8f3', color: '#7a5c42' }}>
+                              {d.note}
+                            </p>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
