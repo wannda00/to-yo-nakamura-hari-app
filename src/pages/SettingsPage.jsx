@@ -13,11 +13,14 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
   const [confirmId, setConfirmId] = useState(null)
   const [importStatus, setImportStatus] = useState(null)
   const [animating, setAnimating] = useState(new Set())
+  const [addAnim, setAddAnim] = useState(false)
   const fileInputRef = useRef(null)
 
   function handleAddFreeInput() {
     const n = input.trim()
     if (!n || symptoms.some(s => s.name === n)) return
+    setAddAnim(true)
+    setTimeout(() => setAddAnim(false), 350)
     addSymptom(n)
     setInput('')
   }
@@ -64,33 +67,6 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
         {/* ── 症状を追加 ── */}
         <section>
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 pt-4 pb-5 space-y-4">
-            {/* free input */}
-            <div>
-              <p className="text-sm font-semibold text-gray-700 mb-2">自由に入力</p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleAddFreeInput()}
-                  placeholder="例：膝の痛み"
-                  className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#3C2E1D] placeholder:text-gray-300"
-                  maxLength={20}
-                />
-                <button
-                  onClick={handleAddFreeInput}
-                  disabled={!input.trim()}
-                  className="px-4 py-2.5 text-sm font-bold rounded-xl transition-all active:scale-95"
-                  style={input.trim()
-                    ? { background: '#3C2E1D', color: 'white' }
-                    : { background: '#f5ede4', color: '#a0856e', border: '1.5px solid #e8d9cc' }
-                  }
-                >
-                  追加
-                </button>
-              </div>
-            </div>
-
             {/* presets — all always shown */}
             <div>
               <p className="text-sm font-semibold text-gray-700 mb-2">症状一覧</p>
@@ -125,6 +101,36 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
               <p className="text-[11px] text-gray-400 mt-2">
                 タップで追加・もう一度タップで解除
               </p>
+            </div>
+
+            {/* free input */}
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-2">自由に入力</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleAddFreeInput()}
+                  placeholder="例：膝の痛み"
+                  className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#3C2E1D] placeholder:text-gray-300"
+                  maxLength={20}
+                />
+                <button
+                  onClick={handleAddFreeInput}
+                  disabled={!input.trim()}
+                  className="px-4 py-2.5 text-sm font-bold rounded-xl"
+                  style={{
+                    transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s',
+                    transform: addAnim ? 'scale(0.88)' : 'scale(1)',
+                    ...(input.trim()
+                      ? { background: '#3C2E1D', color: 'white' }
+                      : { background: '#f5ede4', color: '#a0856e', border: '1.5px solid #e8d9cc' }),
+                  }}
+                >
+                  追加
+                </button>
+              </div>
             </div>
           </div>
         </section>
