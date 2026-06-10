@@ -9,9 +9,12 @@ body {
 
 #root {
   width: 100%;
-  max-width: 480px;
+  max-width: 640px;
   margin: 0 auto;
-  min-height: 100svh;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* VAS slider — track fill via inline CSS variable */
@@ -58,6 +61,10 @@ body {
 .vas-slider.untouched {
   --thumb-color: #d1d5db;
 }
+
+/* hide scrollbar but allow scroll */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
 
 /* save button bounce */
 @keyframes btn-bounce {

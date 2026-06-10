@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
-import { sendToSheet } from '../hooks/useConsent'
+import { useState, useEffect } from 'react'
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
@@ -37,50 +36,36 @@ function VASSlider({ value, touched, color, onChange }) {
 function SymptomCard({ symptom, value, touched, onChange }) {
   return (
     <div
-      className="rounded-2xl overflow-hidden shadow-sm transition-all duration-200"
-      style={{
-        background: touched ? 'white' : 'white',
-        border: `1.5px solid ${touched ? symptom.color + '50' : '#f3f4f6'}`,
-      }}
+      className="rounded-xl overflow-hidden transition-all duration-200"
+      style={{ border: `1.5px solid ${touched ? symptom.color + '45' : '#f3f4f6'}`, background: 'white' }}
     >
-      <div className="h-1 w-full" style={{ background: touched ? symptom.color : '#e5e7eb' }} />
-
-      <div className="px-4 pt-3 pb-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <span
-              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-              style={{ backgroundColor: symptom.color }}
-            />
-            <span className="font-semibold text-gray-800 text-[15px]">{symptom.name}</span>
+      <div className="px-3 pt-2 pb-2.5">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: symptom.color }} />
+            <span className="font-semibold text-gray-800 text-sm">{symptom.name}</span>
           </div>
           {touched && (
             <span
-              className="text-xs font-semibold px-2 py-0.5 rounded-full"
+              className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
               style={{ color: symptom.color, backgroundColor: symptom.color + '18' }}
             >
               記録済
             </span>
           )}
         </div>
-
-        <VASSlider
-          value={value}
-          touched={touched}
-          color={symptom.color}
-          onChange={onChange}
-        />
-
-        <div className="flex justify-between mt-2">
-          <span className="text-[11px] text-gray-400">なし</span>
-          <span className="text-[11px] text-gray-400">最高</span>
+        <VASSlider value={value} touched={touched} color={symptom.color} onChange={onChange} />
+        <div className="flex justify-between mt-1">
+          <span className="text-[9px] text-gray-400">症状なし</span>
+          <span className="text-[9px] text-gray-400">困ってる</span>
+          <span className="text-[9px] text-gray-400">人生で最もつらい</span>
         </div>
       </div>
     </div>
   )
 }
 
-export default function LogPage({ symptoms, records, saveRecord, onGoToSettings, consent, anonymousId, endpointUrl, treatmentDates, toggleTreatmentDate }) {
+export default function LogPage({ symptoms, records, saveRecord, onGoToSettings, treatmentDates, toggleTreatmentDate }) {
   const [date, setDate] = useState(todayStr())
   const [values, setValues] = useState({})
   const [touched, setTouched] = useState(new Set())
@@ -126,10 +111,6 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
     setSaveKey(k => k + 1)
     setShowToast(true)
     setTimeout(() => setShowToast(false), 2400)
-
-    if (consent && endpointUrl) {
-      sendToSheet({ endpointUrl, anonymousId, date, entries, symptoms })
-    }
   }
 
   function shiftDate(delta) {
@@ -148,13 +129,13 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
       <div className="flex flex-col min-h-screen pb-20">
         <div
           className="px-4 pt-6 pb-5"
-          style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+          style={{ background: '#3C2E1D' }}
         >
           <h1 className="text-white font-bold text-xl">症状を記録する</h1>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-5 py-16">
           <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl"
-            style={{ background: 'linear-gradient(135deg, #667eea20, #764ba220)' }}>
+            style={{ background: '#3C2E1D12' }}>
             🩺
           </div>
           <div>
@@ -166,7 +147,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
           <button
             onClick={onGoToSettings}
             className="px-6 py-3 rounded-2xl text-white font-bold text-sm active:scale-95 transition-all"
-            style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+            style={{ background: '#3C2E1D' }}
           >
             ⚙️　症状を設定する
           </button>
@@ -180,7 +161,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
       {/* header */}
       <div
         className="px-4 pt-6 pb-5 sticky top-0 z-10"
-        style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+        style={{ background: '#3C2E1D' }}
       >
         <div className="flex items-center justify-between mb-1">
           <h1 className="text-white font-bold text-xl">症状を記録する</h1>
@@ -228,18 +209,15 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
       </div>
 
       {/* cards */}
-      <div className="px-4 pt-4 space-y-3">
+      <div className="px-4 pt-3 space-y-2">
         {/* 施術日トグル */}
         <div
           className="rounded-2xl overflow-hidden shadow-sm transition-all duration-200 border"
           style={{
-            border: treatmentDates?.includes(date) ? '1.5px solid #667eea50' : '1.5px solid #f3f4f6',
-            background: treatmentDates?.includes(date) ? '#f5f3ff' : 'white',
+            border: treatmentDates?.includes(date) ? '1.5px solid #3C2E1D40' : '1.5px solid #f3f4f6',
+            background: treatmentDates?.includes(date) ? '#fdf8f3' : 'white',
           }}
         >
-          <div className={`h-1 w-full ${treatmentDates?.includes(date) ? '' : 'bg-gray-100'}`}
-            style={treatmentDates?.includes(date) ? { background: 'linear-gradient(135deg, #667eea, #764ba2)' } : {}}
-          />
           <div className="px-4 py-3.5 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-base">🗓</span>
@@ -250,11 +228,33 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
             </div>
             <button
               onClick={() => toggleTreatmentDate(date)}
-              className={`relative w-12 h-7 rounded-full transition-colors duration-200 flex-shrink-0`}
-              style={{ background: treatmentDates?.includes(date) ? 'linear-gradient(135deg, #667eea, #764ba2)' : '#e5e7eb' }}
+              style={{
+                position: 'relative',
+                width: 48,
+                height: 28,
+                borderRadius: 14,
+                flexShrink: 0,
+                border: 'none',
+                cursor: 'pointer',
+                background: treatmentDates?.includes(date)
+                  ? '#3C2E1D'
+                  : '#e5e7eb',
+                transition: 'background 0.2s',
+              }}
             >
               <span
-                className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${treatmentDates?.includes(date) ? 'translate-x-6' : 'translate-x-1'}`}
+                style={{
+                  position: 'absolute',
+                  top: 4,
+                  left: 0,
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: 'white',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
+                  transition: 'transform 0.2s',
+                  transform: `translateX(${treatmentDates?.includes(date) ? 24 : 4}px)`,
+                }}
               />
             </button>
           </div>
@@ -277,13 +277,13 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
             onChange={e => { setNote(e.target.value); setSaved(false) }}
             placeholder="今日の状態・気づきなど..."
             rows={3}
-            className="w-full text-sm text-gray-700 border border-gray-200 rounded-xl px-3 py-2 resize-none focus:outline-none focus:border-purple-400 placeholder:text-gray-300"
+            className="w-full text-sm text-gray-700 border border-gray-200 rounded-xl px-3 py-2 resize-none focus:outline-none focus:border-[#3C2E1D] placeholder:text-gray-300"
           />
         </div>
       </div>
 
       {/* save footer */}
-      <div className="fixed bottom-16 left-0 right-0 max-w-[480px] mx-auto px-4 py-3 bg-white/90 backdrop-blur border-t border-gray-100">
+      <div className="fixed bottom-14 left-0 right-0 max-w-[640px] mx-auto px-4 py-3 bg-white/90 backdrop-blur border-t border-gray-100">
         {touchedCount === 0 && (
           <p className="text-center text-xs text-gray-400 mb-2">
             スライダーを動かして感覚的に記録してください
@@ -299,7 +299,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
               ? '#22c55e'
               : touchedCount === 0
               ? '#d1d5db'
-              : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              : '#3C2E1D',
           }}
         >
           {saved ? '✓ 保存済み' : touchedCount > 0 ? `${touchedCount}件の症状を保存する` : '症状を選択してください'}

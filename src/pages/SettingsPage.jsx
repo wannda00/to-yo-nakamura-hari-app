@@ -1,55 +1,19 @@
 import { useState, useRef } from 'react'
 import { exportAllData, importAllData } from '../hooks/useStorage'
 
-const PRESET_SYMPTOMS = ['肩こり', '腰痛', '膝痛', '頭痛', '便秘', '下痢しやすい', '鼻炎', '眼精疲労']
+const PRESET_SYMPTOMS = [
+  '肩こり', '腰痛', '膝痛', '頭痛', '便秘', '下痢しやすい', '鼻炎', '眼精疲労',
+  'しびれ', '高血圧', '耳鳴り', 'めまい', '動悸', '喘息', '足がつる', '冷え性',
+  'のぼせる', '睡眠障害', '頻尿', '花粉症', 'むくみ', '生理痛', '胃炎', '皮ふ症状', '倦怠感',
+  'イライラする', '落ち込みやすい',
+]
 
-const GAS_SCRIPT = `function doPost(e) {
-  try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(['送信日時','匿名ID','記録日','症状','スコア']);
-    }
-    var data = JSON.parse(e.postData.contents);
-    data.entries.forEach(function(entry) {
-      sheet.appendRow([
-        new Date().toLocaleString('ja-JP'),
-        data.anonymousId,
-        data.date,
-        entry.symptomName,
-        entry.value
-      ]);
-    });
-    return ContentService
-      .createTextOutput(JSON.stringify({status:'ok'}))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({status:'error',message:err.toString()}))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}`
-
-export default function SettingsPage({ symptoms, addSymptom, removeSymptom, consent, setConsent, anonymousId, endpointUrl, setEndpointUrl }) {
+export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
   const [input, setInput] = useState('')
   const [confirmId, setConfirmId] = useState(null)
   const [importStatus, setImportStatus] = useState(null)
-  const [urlInput, setUrlInput] = useState(endpointUrl)
-  const [urlSaved, setUrlSaved] = useState(false)
-  const [showScript, setShowScript] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const [animating, setAnimating] = useState(new Set())
   const fileInputRef = useRef(null)
-
-  function handleSaveUrl() {
-    setEndpointUrl(urlInput)
-    setUrlSaved(true)
-    setTimeout(() => setUrlSaved(false), 2000)
-  }
-
-  function handleCopyScript() {
-    navigator.clipboard.writeText(GAS_SCRIPT)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
 
   function handleAddFreeInput() {
     const n = input.trim()
@@ -58,9 +22,25 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, cons
     setInput('')
   }
 
-  function handleAddPreset(name) {
-    if (symptoms.some(s => s.name === name)) return
-    addSymptom(name)
+  function handlePresetClick(name) {
+    triggerAnim(name)
+    const existing = symptoms.find(s => s.name === name)
+    if (existing) {
+      removeSymptom(existing.id)
+    } else {
+      addSymptom(name)
+    }
+  }
+
+  function triggerAnim(name) {
+    setAnimating(prev => new Set([...prev, name]))
+    setTimeout(() => {
+      setAnimating(prev => {
+        const next = new Set(prev)
+        next.delete(name)
+        return next
+      })
+    }, 350)
   }
 
   async function handleImport(e) {
@@ -77,13 +57,11 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, cons
     e.target.value = ''
   }
 
-  const unaddedPresets = PRESET_SYMPTOMS.filter(p => !symptoms.some(s => s.name === p))
-
   return (
     <div className="flex flex-col min-h-screen pb-20">
       <div
         className="px-4 pt-6 pb-5 sticky top-0 z-10"
-        style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+        style={{ background: '#3C2E1D' }}
       >
         <h1 className="text-white font-bold text-xl">設定</h1>
         <p className="text-white/60 text-xs mt-0.5">症状の管理とデータのバックアップ</p>
@@ -105,7 +83,7 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, cons
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddFreeInput()}
                   placeholder="例：膝の痛み"
-                  className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-purple-400 placeholder:text-gray-300"
+                  className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#3C2E1D] placeholder:text-gray-300"
                   maxLength={20}
                 />
                 <button
@@ -114,7 +92,7 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, cons
                   className="px-4 py-2.5 text-white text-sm font-bold rounded-xl disabled:opacity-30 transition-all active:scale-95"
                   style={{
                     background: input.trim()
-                      ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                      ? '#3C2E1D'
                       : '#e5e7eb',
                   }}
                 >
@@ -123,23 +101,43 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, cons
               </div>
             </div>
 
-            {/* presets */}
-            {unaddedPresets.length > 0 && (
-              <div>
-                <p className="text-sm font-semibold text-gray-700 mb-2">よく使う症状</p>
-                <div className="flex flex-wrap gap-2">
-                  {unaddedPresets.map(p => (
+            {/* presets — all always shown */}
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-2">よく使う症状</p>
+              <div className="flex flex-wrap gap-2">
+                {PRESET_SYMPTOMS.map(p => {
+                  const isAdded = symptoms.some(s => s.name === p)
+                  const isAnim = animating.has(p)
+                  return (
                     <button
                       key={p}
-                      onClick={() => handleAddPreset(p)}
-                      className="px-3 py-1.5 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-full hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 transition-colors"
+                      onClick={() => handlePresetClick(p)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: 9999,
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        border: 'none',
+                        transform: isAnim ? 'scale(0.88)' : 'scale(1)',
+                        transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, box-shadow 0.2s, color 0.2s',
+                        background: isAdded
+                          ? '#3C2E1D'
+                          : '#f9fafb',
+                        color: isAdded ? 'white' : '#6b7280',
+                        boxShadow: isAdded ? '0 2px 10px rgba(102,126,234,0.4)' : 'none',
+                        outline: isAdded ? 'none' : '1.5px solid #e5e7eb',
+                      }}
                     >
-                      ＋ {p}
+                      {isAdded ? `✓ ${p}` : `＋ ${p}`}
                     </button>
-                  ))}
-                </div>
+                  )
+                })}
               </div>
-            )}
+              <p className="text-[11px] text-gray-400 mt-2">
+                タップで追加・もう一度タップで解除
+              </p>
+            </div>
           </div>
         </section>
 
@@ -194,158 +192,39 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, cons
           )}
         </section>
 
-        {/* ── データ共有 ── */}
-        <section>
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">データ共有</p>
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-
-            {/* consent toggle */}
-            <div className="px-4 py-4 border-b border-gray-50">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-gray-800">先生へのデータ共有</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    症状スコア・日付を匿名で自動送信（改善・SNS等に活用）
-                  </p>
-                </div>
-                <button
-                  onClick={() => setConsent(consent ? false : true)}
-                  className={`relative w-12 h-7 rounded-full transition-colors duration-200 flex-shrink-0 ${consent ? 'bg-purple-500' : 'bg-gray-200'}`}
-                >
-                  <span
-                    className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${consent ? 'translate-x-6' : 'translate-x-1'}`}
-                  />
-                </button>
-              </div>
-              {consent === false && (
-                <p className="text-[11px] text-gray-400 mt-2">共有しない設定になっています</p>
-              )}
-              {consent === true && !endpointUrl && (
-                <p className="text-[11px] text-amber-500 mt-2">⚠ 送信先URLが未設定です（下で設定してください）</p>
-              )}
-              {consent === true && endpointUrl && (
-                <p className="text-[11px] text-green-600 mt-2">✓ 保存のたびに自動送信されます</p>
-              )}
-            </div>
-
-            {/* anonymous ID */}
-            <div className="px-4 py-3 border-b border-gray-50">
-              <p className="text-xs font-semibold text-gray-500 mb-1">あなたの匿名ID</p>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 text-sm font-mono bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-gray-700 select-all">
-                  {anonymousId}
-                </code>
-                <button
-                  onClick={() => navigator.clipboard.writeText(anonymousId)}
-                  className="flex-shrink-0 text-xs text-gray-500 border border-gray-200 rounded-xl px-3 py-2 hover:bg-gray-50"
-                >
-                  コピー
-                </button>
-              </div>
-              <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">
-                先生に伝えることで、あなたの記録を特定してもらえます
-              </p>
-            </div>
-
-            {/* endpoint URL */}
-            <div className="px-4 py-4 border-b border-gray-50">
-              <p className="text-xs font-semibold text-gray-500 mb-2">送信先URL（先生が設定）</p>
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  value={urlInput}
-                  onChange={e => { setUrlInput(e.target.value); setUrlSaved(false) }}
-                  placeholder="https://script.google.com/..."
-                  className="flex-1 text-xs border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-purple-400 placeholder:text-gray-300"
-                />
-                <button
-                  onClick={handleSaveUrl}
-                  disabled={!urlInput.trim()}
-                  className="flex-shrink-0 px-3 py-2 text-sm font-bold text-white rounded-xl disabled:opacity-30 transition-all active:scale-95"
-                  style={{ background: urlSaved ? '#22c55e' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
-                >
-                  {urlSaved ? '✓' : '保存'}
-                </button>
-              </div>
-            </div>
-
-            {/* GAS setup guide */}
-            <div className="px-4 py-4">
-              <button
-                onClick={() => setShowScript(s => !s)}
-                className="flex items-center gap-2 text-xs font-semibold text-purple-600"
-              >
-                <span>{showScript ? '▼' : '▶'}</span>
-                Googleスプレッドシートの設定方法
-              </button>
-              {showScript && (
-                <div className="mt-3 space-y-2 text-xs text-gray-600 leading-relaxed">
-                  <ol className="list-decimal list-inside space-y-1.5 text-gray-600">
-                    <li><a href="https://sheets.google.com" target="_blank" rel="noreferrer" className="text-purple-600 underline">sheets.google.com</a> で新しいシートを作成</li>
-                    <li>メニュー「拡張機能」→「Apps Script」を開く</li>
-                    <li>下のスクリプトをコピーして貼り付け</li>
-                    <li>「デプロイ」→「新しいデプロイ」→「ウェブアプリ」</li>
-                    <li>「アクセスできるユーザー」を「全員」に設定して「デプロイ」</li>
-                    <li>表示されたURLを上の「送信先URL」に貼り付け</li>
-                  </ol>
-                  <div className="relative mt-3">
-                    <pre className="bg-gray-900 text-green-400 text-[10px] rounded-xl p-3 overflow-x-auto leading-relaxed whitespace-pre-wrap">
-                      {GAS_SCRIPT}
-                    </pre>
-                    <button
-                      onClick={handleCopyScript}
-                      className="absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-lg transition-colors"
-                      style={{ background: copied ? '#22c55e' : 'rgba(255,255,255,0.15)', color: 'white' }}
-                    >
-                      {copied ? '✓ コピー済み' : 'コピー'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-
         {/* ── データのバックアップ ── */}
         <section>
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
             データのバックアップ
           </p>
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            {/* explanation */}
             <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
               <p className="text-xs text-blue-700 leading-relaxed">
                 スマートフォンの機種変更や故障に備え、定期的にデータをエクスポートして保存しておくことをおすすめします。
               </p>
             </div>
 
-            {/* export */}
             <div className="px-4 py-4 border-b border-gray-50">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-bold text-gray-800">📤 エクスポート</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    全データをJSONファイルで保存
-                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">全データをJSONファイルで保存</p>
                 </div>
                 <button
                   onClick={exportAllData}
                   className="flex-shrink-0 px-4 py-2 text-sm font-bold text-white rounded-xl transition-all active:scale-95"
-                  style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+                  style={{ background: '#3C2E1D' }}
                 >
                   保存する
                 </button>
               </div>
             </div>
 
-            {/* import */}
             <div className="px-4 py-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-bold text-gray-800">📥 インポート</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    バックアップファイルからデータを復元
-                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">バックアップファイルからデータを復元</p>
                 </div>
                 <button
                   onClick={() => fileInputRef.current?.click()}
