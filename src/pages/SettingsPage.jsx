@@ -122,9 +122,6 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
                   )
                 })}
               </div>
-              <p className="text-[11px] text-gray-400 mt-2">
-                タップで追加・もう一度タップで解除
-              </p>
             </div>
 
             {/* free input */}
