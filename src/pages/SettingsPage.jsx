@@ -93,7 +93,7 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
 
             {/* presets — all always shown */}
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-2">よく使う症状</p>
+              <p className="text-sm font-semibold text-gray-700 mb-2">症状一覧</p>
               <div className="flex flex-wrap gap-2">
                 {PRESET_SYMPTOMS.map(p => {
                   const isAdded = symptoms.some(s => s.name === p)
