@@ -80,18 +80,18 @@ export default function App() {
       </div>
 
       {/* Bottom nav */}
-      <nav className="flex-shrink-0 bg-white border-t border-gray-100 flex z-20">
+      <nav className="flex-shrink-0 flex z-20" style={{ background: '#f5ede4', borderTop: '1px solid #e8d9cc' }}>
         {TABS.map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className="flex-1 flex flex-col items-center justify-center py-3 transition-colors active:opacity-60"
+            className="flex-1 flex items-center justify-center py-4 active:opacity-60 transition-opacity"
           >
             <span
-              className="text-sm font-bold px-4 py-1.5 rounded-full transition-all"
+              className="text-base font-bold px-5 py-2 rounded-full transition-all"
               style={tab === t.id
                 ? { background: '#3C2E1D', color: 'white' }
-                : { color: '#9ca3af' }
+                : { color: '#a0856e' }
               }
             >{t.label}</span>
           </button>
