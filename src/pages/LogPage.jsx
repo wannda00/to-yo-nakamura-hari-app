@@ -170,7 +170,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-6">
+    <div className="flex flex-col pb-6">
       {/* header */}
       <div
         className="px-4 pt-4 pb-4 sticky top-0 z-10"
