@@ -97,6 +97,30 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
                     </button>
                   )
                 })}
+                {symptoms.filter(s => !PRESET_SYMPTOMS.includes(s.name)).map(s => {
+                  const isAnim = animating.has(s.name)
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => handlePresetClick(s.name)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: 9999,
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        border: 'none',
+                        transform: isAnim ? 'scale(0.88)' : 'scale(1)',
+                        transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, box-shadow 0.2s, color 0.2s',
+                        background: '#3C2E1D',
+                        color: 'white',
+                        boxShadow: '0 2px 10px rgba(102,126,234,0.4)',
+                      }}
+                    >
+                      ✓ {s.name}
+                    </button>
+                  )
+                })}
               </div>
               <p className="text-[11px] text-gray-400 mt-2">
                 タップで追加・もう一度タップで解除
