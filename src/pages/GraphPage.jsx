@@ -71,8 +71,6 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
 
   const values = chartData.map(d => d.value).filter(v => v !== null)
   const avg = values.length ? Math.round((values.reduce((s, v) => s + v, 0) / values.length) * 10) / 10 : null
-  const max = values.length ? Math.max(...values) : null
-  const min = values.length ? Math.min(...values) : null
   const latest = values[values.length - 1] ?? null
   const prev = values[values.length - 2] ?? null
   const trend = latest !== null && prev !== null ? Math.round((latest - prev) * 10) / 10 : null
@@ -140,29 +138,6 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
             </div>
           </div>
 
-          {/* ── 統計 4ボックス ── */}
-          <div className="flex-shrink-0 px-3 pb-2 grid grid-cols-4 gap-2">
-            {[
-              { label: '最新値', value: latest?.toFixed(1), hi: true },
-              { label: '平均',   value: avg?.toFixed(1) },
-              { label: '最大',   value: max?.toFixed(1) },
-              { label: '最小',   value: min?.toFixed(1) },
-            ].map(({ label, value, hi }) => (
-              <div
-                key={label}
-                className="bg-white rounded-xl py-2 px-1 text-center shadow-sm border"
-                style={hi && value
-                  ? { borderColor: symptom.color + '40', backgroundColor: symptom.color + '08' }
-                  : { borderColor: '#f3f4f6' }}
-              >
-                <p className="text-[9px] text-gray-400 font-medium leading-none mb-1">{label}</p>
-                <p className="text-base font-black leading-none"
-                  style={{ color: hi && value ? symptom.color : '#374151' }}>
-                  {value ?? '—'}
-                </p>
-              </div>
-            ))}
-          </div>
 
           {/* ── 施術統計 ── */}
           {treatmentCount > 0 && (
