@@ -11,6 +11,7 @@ const PRESET_SYMPTOMS = [
 export default function SettingsPage({ symptoms, addSymptom, removeSymptom, updateSymptomColor, moveSymptom }) {
   const [input, setInput] = useState('')
   const [confirmId, setConfirmId] = useState(null)
+  const [confirmReset, setConfirmReset] = useState(false)
   const [colorPickerId, setColorPickerId] = useState(null)
   const [importStatus, setImportStatus] = useState(null)
   const [animating, setAnimating] = useState(new Set())
@@ -304,6 +305,46 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, upda
               )}
             </div>
           </div>
+        </section>
+
+        {/* ── データの初期化 ── */}
+        <section>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-4 py-4 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold text-gray-800">データを初期化</p>
+                <p className="text-xs text-gray-500 mt-0.5">すべての記録・症状・施術日を削除</p>
+              </div>
+              {confirmReset ? (
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button
+                    onClick={() => {
+                      ['symptoms','records','treatmentDates','onboarded'].forEach(k => localStorage.removeItem(k))
+                      window.location.reload()
+                    }}
+                    className="text-xs text-red-500 font-bold px-2.5 py-1.5 bg-red-50 border border-red-200 rounded-xl"
+                  >本当に初期化</button>
+                  <button
+                    onClick={() => setConfirmReset(false)}
+                    className="text-xs text-gray-500 px-2.5 py-1.5 border border-gray-200 rounded-xl"
+                  >戻る</button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmReset(true)}
+                  className="flex-shrink-0 px-4 py-2 text-sm font-bold rounded-xl border transition-all active:scale-95"
+                  style={{ color: '#ef4444', borderColor: '#fecaca', background: '#fff5f5' }}
+                >
+                  初期化
+                </button>
+              )}
+            </div>
+          </div>
+          {confirmReset && (
+            <p className="text-xs text-red-400 text-center mt-2">
+              この操作は取り消せません。エクスポートでバックアップを取ってから行ってください。
+            </p>
+          )}
         </section>
       </div>
     </div>
