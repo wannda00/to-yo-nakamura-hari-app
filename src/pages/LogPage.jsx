@@ -163,15 +163,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
         className="px-4 pt-6 pb-5 sticky top-0 z-10"
         style={{ background: '#3C2E1D' }}
       >
-        <div className="flex items-center justify-between mb-1">
-          <h1 className="text-white font-bold text-xl">症状を記録する</h1>
-          {touchedCount > 0 && (
-            <span className="bg-white/20 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
-              {touchedCount}件入力中
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-3 mt-3">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => shiftDate(-1)}
             className="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center text-sm hover:bg-white/30 transition-colors"
