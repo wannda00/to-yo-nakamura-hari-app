@@ -283,7 +283,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
       </div>
 
       {/* save footer */}
-      <div className="fixed bottom-14 left-0 right-0 max-w-[640px] mx-auto px-4 py-3 bg-white/90 backdrop-blur border-t border-gray-100">
+      <div className="fixed bottom-20 left-0 right-0 max-w-[640px] mx-auto px-4 py-3 bg-white/90 backdrop-blur border-t border-gray-100">
         {touchedCount === 0 && (
           <p className="text-center text-xs text-gray-400 mb-2">
             スライダーを動かして感覚的に記録してください
