@@ -40,27 +40,16 @@ function SymptomCard({ symptom, value, touched, onChange }) {
       className="rounded-xl overflow-hidden transition-all duration-200"
       style={{ border: `1.5px solid ${touched ? symptom.color + '45' : '#f3f4f6'}`, background: 'white' }}
     >
-      <div className="px-3 pt-2 pb-2.5">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: symptom.color }} />
-            <span className="font-semibold text-gray-800 text-sm">{symptom.name}</span>
-          </div>
-          {touched && (
-            <span
-              className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-              style={{ color: symptom.color, backgroundColor: symptom.color + '18' }}
-            >
-              記録済
-            </span>
-          )}
+      <div className="flex items-center gap-2.5 px-3 py-2">
+        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: symptom.color }} />
+        <span className="font-semibold text-gray-700 text-sm flex-shrink-0 max-w-[76px] truncate">{symptom.name}</span>
+        <div className="flex-1 min-w-0">
+          <VASSlider value={value} touched={touched} color={symptom.color} onChange={onChange} />
         </div>
-        <VASSlider value={value} touched={touched} color={symptom.color} onChange={onChange} />
-        <div className="flex justify-between mt-1">
-          <span className="text-[9px] text-gray-400">症状なし</span>
-          <span className="text-[9px] text-gray-400">困ってる</span>
-          <span className="text-[9px] text-gray-400">人生で最もつらい</span>
-        </div>
+        <span className="flex-shrink-0 text-xs font-black w-8 text-right tabular-nums"
+          style={{ color: touched ? symptom.color : '#d1d5db' }}>
+          {value.toFixed(1)}
+        </span>
       </div>
     </div>
   )
@@ -225,7 +214,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
       </div>
 
       {/* cards */}
-      <div className="px-4 pt-3 space-y-2">
+      <div className="px-4 pt-3 space-y-1.5">
         {/* 施術日トグル */}
         <div
           className="rounded-2xl overflow-hidden shadow-sm transition-all duration-200 border"
@@ -234,34 +223,27 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
             background: treatmentDates?.includes(date) ? '#fdf8f3' : 'white',
           }}
         >
-          <div className="px-4 py-3.5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#3C2E1D' }} />
-              <div>
-                <p className="font-semibold text-gray-800 text-sm">施術日</p>
-                <p className="text-[11px] text-gray-400">この日に施術を受けた</p>
-              </div>
-            </div>
+          <div className="px-3 py-2 flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#3C2E1D' }} />
+            <span className="font-semibold text-gray-700 text-sm flex-1">施術日</span>
             <button
               onClick={() => toggleTreatmentDate(date)}
               style={{
                 position: 'relative',
-                width: 48,
-                height: 28,
-                borderRadius: 14,
+                width: 44,
+                height: 26,
+                borderRadius: 13,
                 flexShrink: 0,
                 border: 'none',
                 cursor: 'pointer',
-                background: treatmentDates?.includes(date)
-                  ? '#3C2E1D'
-                  : '#e5e7eb',
+                background: treatmentDates?.includes(date) ? '#3C2E1D' : '#e5e7eb',
                 transition: 'background 0.2s',
               }}
             >
               <span
                 style={{
                   position: 'absolute',
-                  top: 4,
+                  top: 3,
                   left: 0,
                   width: 20,
                   height: 20,
@@ -269,7 +251,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
                   background: 'white',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
                   transition: 'transform 0.2s',
-                  transform: `translateX(${treatmentDates?.includes(date) ? 24 : 4}px)`,
+                  transform: `translateX(${treatmentDates?.includes(date) ? 21 : 3}px)`,
                 }}
               />
             </button>
