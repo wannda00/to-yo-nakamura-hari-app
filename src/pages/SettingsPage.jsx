@@ -113,12 +113,13 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddFreeInput()}
                   placeholder="例：膝の痛み"
-                  className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#3C2E1D] placeholder:text-gray-300"
+                  className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#3C2E1D] placeholder:text-gray-300"
+                  style={{ fontSize: '16px' }}
                   maxLength={20}
                 />
                 <button
                   onClick={handleAddFreeInput}
-                  disabled={!input.trim()}
+                  disabled={!input.trim() && !addAnim}
                   className={`px-4 py-2.5 text-sm font-bold rounded-xl${addAnim ? ' add-pop' : ''}`}
                   style={addAnim
                     ? { background: '#22c55e', color: 'white' }
