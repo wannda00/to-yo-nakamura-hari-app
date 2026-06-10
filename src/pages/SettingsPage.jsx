@@ -59,14 +59,6 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
 
   return (
     <div className="flex flex-col min-h-screen pb-20">
-      <div
-        className="px-4 pt-6 pb-5 sticky top-0 z-10"
-        style={{ background: '#3C2E1D' }}
-      >
-        <h1 className="text-white font-bold text-xl">設定</h1>
-        <p className="text-white/60 text-xs mt-0.5">症状の管理とデータのバックアップ</p>
-      </div>
-
       <div className="px-4 py-4 space-y-5">
 
         {/* ── 症状を追加 ── */}
