@@ -275,9 +275,9 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
       </div>
 
       {/* save footer */}
-      <div className="fixed bottom-[76px] left-0 right-0 max-w-[640px] mx-auto px-4 py-3 bg-white/90 backdrop-blur border-t border-gray-100">
+      <div className="fixed bottom-[72px] left-0 right-0 max-w-[640px] mx-auto px-4 py-2 bg-white/90 backdrop-blur border-t border-gray-100">
         {touchedCount === 0 && (
-          <p className="text-center text-xs text-gray-400 mb-2">
+          <p className="text-center text-xs text-gray-400 mb-1.5">
             スライダーを動かして感覚的に記録してください
           </p>
         )}
@@ -285,7 +285,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
           key={saveKey}
           onClick={handleSave}
           disabled={touchedCount === 0}
-          className={`w-full py-3.5 rounded-2xl font-bold text-white text-[15px] transition-colors${saved ? ' btn-bounce' : ''}`}
+          className={`w-full py-2.5 rounded-2xl font-bold text-white text-[15px] transition-colors${saved ? ' btn-bounce' : ''}`}
           style={{
             background: saved
               ? '#22c55e'
