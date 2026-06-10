@@ -119,16 +119,15 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
                 <button
                   onClick={handleAddFreeInput}
                   disabled={!input.trim()}
-                  className="px-4 py-2.5 text-sm font-bold rounded-xl"
-                  style={{
-                    transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s',
-                    transform: addAnim ? 'scale(0.88)' : 'scale(1)',
-                    ...(input.trim()
+                  className={`px-4 py-2.5 text-sm font-bold rounded-xl${addAnim ? ' add-pop' : ''}`}
+                  style={addAnim
+                    ? { background: '#22c55e', color: 'white' }
+                    : input.trim()
                       ? { background: '#3C2E1D', color: 'white' }
-                      : { background: '#f5ede4', color: '#a0856e', border: '1.5px solid #e8d9cc' }),
-                  }}
+                      : { background: '#f5ede4', color: '#a0856e', border: '1.5px solid #e8d9cc' }
+                  }
                 >
-                  追加
+                  {addAnim ? '✓' : '追加'}
                 </button>
               </div>
             </div>
