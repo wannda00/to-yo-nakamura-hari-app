@@ -82,12 +82,6 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
     ? Math.round((latest - firstVal) * 10) / 10
     : null
 
-  const treatmentCount = treatmentDates.length
-  const firstTreatment = treatmentCount > 0 ? [...treatmentDates].sort()[0] : null
-  const treatmentDays = firstTreatment
-    ? Math.floor((new Date() - new Date(firstTreatment + 'T00:00:00')) / 86400000)
-    : null
-
   if (symptoms.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-2">
@@ -141,35 +135,15 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
             </div>
           </div>
 
-          {/* ── 施術統計 ── */}
-          {treatmentCount > 0 && (
-            <div className="flex-shrink-0 px-3 pb-2 flex gap-2">
-              <div className="flex-1 bg-white rounded-xl py-2 px-3 shadow-sm border border-gray-100 text-center">
-                <p className="text-[9px] text-gray-400 font-medium leading-none mb-1">施術回数</p>
-                <p className="text-base font-black leading-none text-gray-800">
-                  {treatmentCount}<span className="text-[11px] font-semibold text-gray-500 ml-0.5">回</span>
-                </p>
-              </div>
-              {treatmentDays !== null && (
-                <div className="flex-1 bg-white rounded-xl py-2 px-3 shadow-sm border border-gray-100 text-center">
-                  <p className="text-[9px] text-gray-400 font-medium leading-none mb-1">通院期間</p>
-                  <p className="text-base font-black leading-none text-gray-800">
-                    {treatmentDays}<span className="text-[11px] font-semibold text-gray-500 ml-0.5">日</span>
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* ── 初回比 ── */}
           {firstTrend !== null && (
             <div className="flex-shrink-0 px-3 pb-2">
-              <div className="bg-white rounded-xl px-3 py-1.5 shadow-sm border border-gray-100 flex items-center gap-2">
+              <div className="bg-white rounded-xl px-3 py-1.5 shadow-sm border border-gray-100 flex items-center justify-center gap-2">
                 <span className="text-[10px] text-gray-400 font-semibold whitespace-nowrap">初回比</span>
                 <span className="text-sm font-black" style={{ color: trendColor(firstTrend) }}>
                   {trendLabel(firstTrend)}
                 </span>
-                <span className="text-[9px] text-gray-400 ml-auto whitespace-nowrap">
+                <span className="text-[9px] text-gray-400 whitespace-nowrap">
                   {firstTrend > 0 ? '悪化' : firstTrend < 0 ? '改善' : ''}
                 </span>
               </div>
