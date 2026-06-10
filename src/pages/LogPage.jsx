@@ -157,7 +157,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-28">
+    <div className="flex flex-col min-h-screen pb-6">
       {/* header */}
       <div
         className="px-4 pt-6 pb-5 sticky top-0 z-10"
@@ -272,20 +272,12 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
             className="w-full text-sm text-gray-700 border border-gray-200 rounded-xl px-3 py-2 resize-none focus:outline-none focus:border-[#3C2E1D] placeholder:text-gray-300"
           />
         </div>
-      </div>
 
-      {/* save footer */}
-      <div className="fixed bottom-[72px] left-0 right-0 max-w-[640px] mx-auto px-4 py-2 bg-white/90 backdrop-blur border-t border-gray-100">
-        {touchedCount === 0 && (
-          <p className="text-center text-xs text-gray-400 mb-1.5">
-            スライダーを動かして感覚的に記録してください
-          </p>
-        )}
         <button
           key={saveKey}
           onClick={handleSave}
           disabled={touchedCount === 0}
-          className={`w-full py-2.5 rounded-2xl font-bold text-white text-[15px] transition-colors${saved ? ' btn-bounce' : ''}`}
+          className={`w-full py-3 rounded-2xl font-bold text-white text-[15px] transition-colors${saved ? ' btn-bounce' : ''}`}
           style={{
             background: saved
               ? '#22c55e'
