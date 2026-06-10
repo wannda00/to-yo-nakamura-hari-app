@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, ReferenceLine
 } from 'recharts'
 
 function formatDateShort(dateStr) {
@@ -22,16 +22,6 @@ function trendLabel(v) {
   return v > 0 ? `▲+${v.toFixed(1)}` : v < 0 ? `▼${v.toFixed(1)}` : '→±0'
 }
 
-function CustomTooltip({ active, payload, label, color, name }) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 px-3 py-2 text-center">
-      <p className="text-xs text-gray-500 mb-0.5">{label}</p>
-      <p className="text-2xl font-black" style={{ color }}>{payload[0].value?.toFixed(1)}</p>
-      <p className="text-[11px] text-gray-400">{name}</p>
-    </div>
-  )
-}
 
 export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
   const [selectedId, setSelectedId] = useState(symptoms[0]?.id || null)
@@ -243,7 +233,6 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
                         tickLine={false}
                         axisLine={false}
                       />
-                      <Tooltip content={<CustomTooltip color={symptom.color} name={symptom.name} />} />
                       {avg !== null && (
                         <ReferenceLine
                           y={avg}
