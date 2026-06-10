@@ -73,6 +73,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
   const [saved, setSaved] = useState(false)
   const [saveKey, setSaveKey] = useState(0)
   const [showToast, setShowToast] = useState(false)
+  const [pendingDate, setPendingDate] = useState(null)
 
   useEffect(() => {
     onUnsavedChange?.(touched.size > 0 && !saved)
@@ -117,11 +118,19 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
     setTimeout(() => setShowToast(false), 2400)
   }
 
+  function requestDateChange(next) {
+    if (touched.size > 0 && !saved) {
+      setPendingDate(next)
+    } else {
+      setDate(next)
+    }
+  }
+
   function shiftDate(delta) {
     const d = new Date(date + 'T00:00:00')
     d.setDate(d.getDate() + delta)
     const next = d.toISOString().slice(0, 10)
-    if (next <= todayStr()) setDate(next)
+    if (next <= todayStr()) requestDateChange(next)
   }
 
   const { full, day } = formatDateJa(date)
@@ -179,7 +188,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
               type="date"
               value={date}
               max={todayStr()}
-              onChange={e => { if (e.target.value) setDate(e.target.value) }}
+              onChange={e => { if (e.target.value) requestDateChange(e.target.value) }}
               className="absolute inset-0 opacity-0 w-full cursor-pointer"
             />
             <div className="flex items-baseline gap-2">
@@ -293,6 +302,39 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
           {saved ? '✓ 保存済み' : touchedCount > 0 ? `${touchedCount}件の症状を保存する` : '症状を選択してください'}
         </button>
       </div>
+
+      {/* 日付変更 未保存警告 */}
+      {pendingDate && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ background: 'rgba(0,0,0,0.4)' }}
+          onClick={() => setPendingDate(null)}
+        >
+          <div
+            className="w-full max-w-[640px] bg-white rounded-t-3xl px-5 pt-6 pb-10"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
+            <h2 className="text-base font-bold text-gray-800 mb-1">保存されていない記録があります</h2>
+            <p className="text-sm text-gray-400 mb-6">日付を移動すると、入力した内容が失われます。</p>
+            <div className="space-y-2.5">
+              <button
+                onClick={() => setPendingDate(null)}
+                className="w-full py-3.5 rounded-2xl font-bold text-white text-[15px]"
+                style={{ background: '#3C2E1D' }}
+              >
+                戻って保存する
+              </button>
+              <button
+                onClick={() => { setDate(pendingDate); setPendingDate(null) }}
+                className="w-full py-3 rounded-2xl font-semibold text-gray-500 text-sm bg-gray-100"
+              >
+                保存せずに移動
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* save toast */}
       {showToast && (
