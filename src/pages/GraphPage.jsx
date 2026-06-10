@@ -192,8 +192,8 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
             </div>
           )}
 
-          {/* ── グラフ（残りを全部使う） ── */}
-          <div className="flex-1 min-h-0 px-3 pb-2">
+          {/* ── グラフ（リスト非表示時のみ） ── */}
+          {!showList && <div className="flex-1 min-h-0 px-3 pb-2">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 h-full flex flex-col p-3">
 
               {/* 凡例 */}
@@ -284,20 +284,20 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
                 )}
               </div>
             </div>
-          </div>
+          </div>}
 
           {/* ── 記録一覧（折りたたみ） ── */}
           {chartData.length > 0 && (
-            <div className="flex-shrink-0 px-3 pb-3">
+            <div className={showList ? 'flex-1 min-h-0 px-3 pb-3 flex flex-col' : 'flex-shrink-0 px-3 pb-3'}>
               <button
                 onClick={() => setShowList(v => !v)}
-                className="w-full flex items-center justify-between px-4 py-2 bg-white rounded-2xl shadow-sm border border-gray-100 text-sm font-semibold text-gray-500"
+                className="flex-shrink-0 w-full flex items-center justify-between px-4 py-2 bg-white rounded-2xl shadow-sm border border-gray-100 text-sm font-semibold text-gray-500"
               >
                 <span>記録一覧（{chartData.length}件）</span>
                 <span className="text-[11px] text-gray-400">{showList ? '▲ 閉じる' : '▼ 開く'}</span>
               </button>
               {showList && (
-                <div className="mt-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-y-auto max-h-44">
+                <div className="flex-1 min-h-0 mt-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-y-auto">
                   {[...chartData].reverse().map((d, i) => (
                     <div key={i} className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50 last:border-0">
                       <span className="text-sm text-gray-600">{d.fullDate}</span>
