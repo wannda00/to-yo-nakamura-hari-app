@@ -15,26 +15,17 @@ export default function App() {
   const [tab, setTab] = useState('log')
   const [onboarded, setOnboarded] = useState(() => !!localStorage.getItem('onboarded'))
   const [hasUnsaved, setHasUnsaved] = useState(false)
-  const [pendingTab, setPendingTab] = useState(null)
   const scrollContainerRef = useRef(null)
+  const logSaveRef = useRef(null)
   const { symptoms, addSymptom, removeSymptom } = useSymptoms()
   const { records, saveRecord } = useRecords()
   const { treatmentDates, toggleTreatmentDate } = useTreatmentDates()
 
   function handleTabChange(newTab) {
     if (tab === 'log' && hasUnsaved && newTab !== 'log') {
-      const el = scrollContainerRef.current
-      if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
-      setPendingTab(newTab)
-    } else {
-      setTab(newTab)
+      logSaveRef.current?.()
     }
-  }
-
-  function confirmLeave() {
-    setTab(pendingTab)
-    setPendingTab(null)
-    setHasUnsaved(false)
+    setTab(newTab)
   }
 
   if (!onboarded) {
@@ -79,6 +70,7 @@ export default function App() {
                   treatmentDates={treatmentDates}
                   toggleTreatmentDate={toggleTreatmentDate}
                   onUnsavedChange={setHasUnsaved}
+                  saveRef={logSaveRef}
                 />
               )}
               {tab === 'settings' && (
@@ -115,38 +107,6 @@ export default function App() {
         ))}
       </nav>
 
-      {/* 未保存警告モーダル */}
-      {pendingTab && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center"
-          style={{ background: 'rgba(0,0,0,0.4)' }}
-          onClick={() => setPendingTab(null)}
-        >
-          <div
-            className="w-full max-w-[640px] bg-white rounded-t-3xl px-5 pt-6 pb-10"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
-            <h2 className="text-base font-bold text-gray-800 mb-1">保存されていない記録があります</h2>
-            <p className="text-sm text-gray-400 mb-6">このまま移動すると、入力した内容が失われます。</p>
-            <div className="space-y-2.5">
-              <button
-                onClick={() => setPendingTab(null)}
-                className="w-full py-3.5 rounded-2xl font-bold text-white text-[15px]"
-                style={{ background: '#3C2E1D' }}
-              >
-                戻って保存する
-              </button>
-              <button
-                onClick={confirmLeave}
-                className="w-full py-3 rounded-2xl font-semibold text-gray-500 text-sm bg-gray-100"
-              >
-                保存せずに移動
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

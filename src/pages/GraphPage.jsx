@@ -62,8 +62,6 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
   const values = chartData.map(d => d.value).filter(v => v !== null)
   const avg = values.length ? Math.round((values.reduce((s, v) => s + v, 0) / values.length) * 10) / 10 : null
   const latest = values[values.length - 1] ?? null
-  const prev = values[values.length - 2] ?? null
-  const trend = latest !== null && prev !== null ? Math.round((latest - prev) * 10) / 10 : null
   const firstVal = allValues[0] ?? null
   const firstTrend = latest !== null && firstVal !== null && allValues.length > 1
     ? Math.round((latest - firstVal) * 10) / 10
@@ -149,31 +147,18 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
             </div>
           )}
 
-          {/* ── 前回比 / 初回比 ── */}
-          {(trend !== null || firstTrend !== null) && (
-            <div className="flex-shrink-0 px-3 pb-2 flex gap-2">
-              {trend !== null && (
-                <div className="flex-1 bg-white rounded-xl px-3 py-1.5 shadow-sm border border-gray-100 flex items-center gap-2">
-                  <span className="text-[10px] text-gray-400 font-semibold whitespace-nowrap">前回比</span>
-                  <span className="text-sm font-black" style={{ color: trendColor(trend) }}>
-                    {trendLabel(trend)}
-                  </span>
-                  <span className="text-[9px] text-gray-400 ml-auto whitespace-nowrap">
-                    {trend > 0 ? '悪化' : trend < 0 ? '改善' : ''}
-                  </span>
-                </div>
-              )}
-              {firstTrend !== null && (
-                <div className="flex-1 bg-white rounded-xl px-3 py-1.5 shadow-sm border border-gray-100 flex items-center gap-2">
-                  <span className="text-[10px] text-gray-400 font-semibold whitespace-nowrap">初回比</span>
-                  <span className="text-sm font-black" style={{ color: trendColor(firstTrend) }}>
-                    {trendLabel(firstTrend)}
-                  </span>
-                  <span className="text-[9px] text-gray-400 ml-auto whitespace-nowrap">
-                    {firstTrend > 0 ? '悪化' : firstTrend < 0 ? '改善' : ''}
-                  </span>
-                </div>
-              )}
+          {/* ── 初回比 ── */}
+          {firstTrend !== null && (
+            <div className="flex-shrink-0 px-3 pb-2">
+              <div className="bg-white rounded-xl px-3 py-1.5 shadow-sm border border-gray-100 flex items-center gap-2">
+                <span className="text-[10px] text-gray-400 font-semibold whitespace-nowrap">初回比</span>
+                <span className="text-sm font-black" style={{ color: trendColor(firstTrend) }}>
+                  {trendLabel(firstTrend)}
+                </span>
+                <span className="text-[9px] text-gray-400 ml-auto whitespace-nowrap">
+                  {firstTrend > 0 ? '悪化' : firstTrend < 0 ? '改善' : ''}
+                </span>
+              </div>
             </div>
           )}
 

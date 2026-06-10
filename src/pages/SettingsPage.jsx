@@ -63,7 +63,6 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
 
         {/* ── 症状を追加 ── */}
         <section>
-          <p className="text-sm font-bold text-gray-600 mb-2">症状を追加</p>
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 pt-4 pb-5 space-y-4">
             {/* free input */}
             <div>
