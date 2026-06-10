@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { exportAllData, importAllData, COLORS } from '../hooks/useStorage'
 import {
   DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors
@@ -14,8 +14,6 @@ const PRESET_SYMPTOMS = [
   'のぼせる', '睡眠障害', '頻尿', '花粉症', 'むくみ', '生理痛', '胃炎', '皮ふ症状', '倦怠感',
   'イライラする', '落ち込みやすい',
 ]
-
-const DELETE_W = 76
 
 function DragHandle({ listeners, attributes }) {
   return (
@@ -35,164 +33,81 @@ function DragHandle({ listeners, attributes }) {
   )
 }
 
-function SortableSymptomRow({ s, openSwipeId, setOpenSwipeId, colorPickerId, setColorPickerId, removeSymptom, updateSymptomColor }) {
+function SortableSymptomRow({ s, confirmId, colorPickerId, setConfirmId, setColorPickerId, removeSymptom, updateSymptomColor }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id })
-  const isOpen = openSwipeId === s.id
-  const contentRef = useRef(null)
-  const ptr = useRef(null) // { startX, startY, startOffset, dir, liveX }
-
-  // Animate to settled position when isOpen changes externally
-  useEffect(() => {
-    const el = contentRef.current
-    if (!el || ptr.current?.dir === 'h') return
-    el.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-    el.style.transform = `translateX(${isOpen ? -DELETE_W : 0}px)`
-  }, [isOpen])
-
-  function pDown(e) {
-    if (isDragging) return
-    ptr.current = {
-      startX: e.clientX, startY: e.clientY,
-      startOffset: isOpen ? -DELETE_W : 0,
-      dir: null, liveX: isOpen ? -DELETE_W : 0,
-    }
-  }
-
-  function pMove(e) {
-    if (isDragging) return
-    const p = ptr.current
-    if (!p || p.dir === 'v') return
-    const dx = e.clientX - p.startX
-    const dy = e.clientY - p.startY
-
-    if (p.dir === null) {
-      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return
-      p.dir = Math.abs(dy) >= Math.abs(dx) ? 'v' : 'h'
-      if (p.dir === 'v') return
-    }
-
-    if (p.dir === 'h' && contentRef.current) {
-      e.stopPropagation()
-      const clamped = Math.min(0, Math.max(-DELETE_W, p.startOffset + dx))
-      p.liveX = clamped
-      contentRef.current.style.transform = `translateX(${clamped}px)`
-      contentRef.current.style.transition = 'none'
-    }
-  }
-
-  function pUp() {
-    if (isDragging) return
-    const p = ptr.current
-    ptr.current = null
-    if (!p || p.dir !== 'h') return
-
-    const snap = p.liveX < -DELETE_W * 0.4
-    if (contentRef.current) {
-      contentRef.current.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-      contentRef.current.style.transform = `translateX(${snap ? -DELETE_W : 0}px)`
-    }
-    if (snap) {
-      setOpenSwipeId(s.id)
-      setColorPickerId(null)
-    } else {
-      setOpenSwipeId(prev => prev === s.id ? null : prev)
-    }
-  }
-
-  function pCancel() {
-    const p = ptr.current
-    ptr.current = null
-    if (!p || p.dir !== 'h') return
-    if (contentRef.current) {
-      contentRef.current.style.transition = 'transform 0.22s ease'
-      contentRef.current.style.transform = `translateX(${isOpen ? -DELETE_W : 0}px)`
-    }
-  }
 
   return (
     <div
       ref={setNodeRef}
       style={{
-        transform: CSS.Transform.toString(transform),
-        transition: isDragging ? undefined : transition,
-        opacity: isDragging ? 0.45 : 1,
+        transform: isDragging
+          ? `${CSS.Transform.toString(transform)} scale(1.04)`
+          : CSS.Transform.toString(transform),
+        transition: isDragging ? 'box-shadow 0.15s' : transition,
+        zIndex: isDragging ? 50 : 'auto',
         position: 'relative',
-        overflow: 'hidden',
-        background: 'white',
+        background: isDragging ? '#fdf8f3' : 'white',
+        boxShadow: isDragging ? '0 8px 28px rgba(0,0,0,0.13)' : 'none',
+        borderRadius: isDragging ? 14 : 0,
       }}
       className="border-b border-gray-50 last:border-0"
     >
-      {/* 削除ゾーン（背景） */}
-      <div
-        className="absolute right-0 inset-y-0 flex items-center justify-center"
-        style={{ width: DELETE_W, background: '#ef4444' }}
-      >
+      <div className="flex items-center px-3 py-3 gap-2">
+        <DragHandle listeners={listeners} attributes={attributes} />
+        {/* 色変更ボタン */}
         <button
-          onPointerDown={e => {
-            e.stopPropagation()
-            removeSymptom(s.id)
-            setOpenSwipeId(null)
-            setColorPickerId(null)
+          onPointerDown={e => e.preventDefault()}
+          onClick={() => setColorPickerId(colorPickerId === s.id ? null : s.id)}
+          className="flex-shrink-0 w-5 h-5 rounded-full transition-all active:scale-90"
+          style={{
+            background: s.color,
+            boxShadow: colorPickerId === s.id
+              ? `0 0 0 2px white, 0 0 0 4px ${s.color}`
+              : '0 1px 3px rgba(0,0,0,0.2)',
           }}
-          className="w-full h-full flex items-center justify-center text-white text-sm font-bold"
-        >削除</button>
-      </div>
-
-      {/* スライドするメインコンテンツ */}
-      <div
-        ref={contentRef}
-        style={{ background: isDragging ? '#fdf8f3' : 'white', touchAction: 'pan-y', position: 'relative', zIndex: 1 }}
-        onPointerDown={pDown}
-        onPointerMove={pMove}
-        onPointerUp={pUp}
-        onPointerCancel={pCancel}
-      >
-        <div className="flex items-center px-3 py-3 gap-2">
-          <DragHandle listeners={listeners} attributes={attributes} />
-          {/* 色変更ボタン */}
-          <button
-            onPointerDown={e => e.preventDefault()}
-            onClick={() => {
-              setColorPickerId(colorPickerId === s.id ? null : s.id)
-              setOpenSwipeId(null)
-            }}
-            className="flex-shrink-0 w-5 h-5 rounded-full transition-all active:scale-90"
-            style={{
-              background: s.color,
-              boxShadow: colorPickerId === s.id
-                ? `0 0 0 2px white, 0 0 0 4px ${s.color}`
-                : '0 1px 3px rgba(0,0,0,0.2)',
-            }}
-          />
-          <span className="flex-1 text-sm font-medium text-gray-800">{s.name}</span>
-          {/* スワイプヒント */}
-          {!isOpen && (
-            <span className="text-[10px] text-gray-300 pr-1">← 削除</span>
-          )}
-        </div>
-        {/* カラーピッカー */}
-        {colorPickerId === s.id && (
-          <div className="px-4 py-2.5 flex flex-wrap gap-2.5" style={{ background: '#fafafa' }}>
-            {COLORS.map(c => (
-              <button
-                key={c}
-                onPointerDown={e => e.preventDefault()}
-                onClick={() => { updateSymptomColor(s.id, c); setColorPickerId(null) }}
-                className="w-7 h-7 rounded-full transition-all active:scale-90"
-                style={{ background: c, boxShadow: s.color === c ? `0 0 0 2px white, 0 0 0 4px ${c}` : 'none' }}
-              />
-            ))}
+        />
+        <span className="flex-1 text-sm font-medium text-gray-800">{s.name}</span>
+        {/* 削除 */}
+        {confirmId === s.id ? (
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => { removeSymptom(s.id); setConfirmId(null); setColorPickerId(null) }}
+              className="text-xs text-red-500 font-bold px-2.5 py-1 bg-red-50 border border-red-200 rounded-lg"
+            >削除</button>
+            <button
+              onClick={() => setConfirmId(null)}
+              className="text-xs text-gray-500 px-2.5 py-1 border border-gray-200 rounded-lg"
+            >戻る</button>
           </div>
+        ) : (
+          <button
+            onClick={() => { setConfirmId(s.id); setColorPickerId(null) }}
+            className="text-gray-300 hover:text-red-400 transition-colors p-1 text-base"
+          >✕</button>
         )}
       </div>
+      {/* カラーピッカー */}
+      {colorPickerId === s.id && (
+        <div className="px-4 py-2.5 flex flex-wrap gap-2.5" style={{ background: '#fafafa' }}>
+          {COLORS.map(c => (
+            <button
+              key={c}
+              onPointerDown={e => e.preventDefault()}
+              onClick={() => { updateSymptomColor(s.id, c); setColorPickerId(null) }}
+              className="w-7 h-7 rounded-full transition-all active:scale-90"
+              style={{ background: c, boxShadow: s.color === c ? `0 0 0 2px white, 0 0 0 4px ${c}` : 'none' }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
 
 export default function SettingsPage({ symptoms, addSymptom, removeSymptom, updateSymptomColor, reorderSymptoms }) {
   const [input, setInput] = useState('')
+  const [confirmId, setConfirmId] = useState(null)
   const [colorPickerId, setColorPickerId] = useState(null)
-  const [openSwipeId, setOpenSwipeId] = useState(null)
   const [confirmReset, setConfirmReset] = useState(false)
   const [importStatus, setImportStatus] = useState(null)
   const [animating, setAnimating] = useState(new Set())
@@ -338,8 +253,8 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, upda
                   {symptoms.map(s => (
                     <SortableSymptomRow
                       key={s.id} s={s}
-                      openSwipeId={openSwipeId} setOpenSwipeId={setOpenSwipeId}
-                      colorPickerId={colorPickerId} setColorPickerId={setColorPickerId}
+                      confirmId={confirmId} colorPickerId={colorPickerId}
+                      setConfirmId={setConfirmId} setColorPickerId={setColorPickerId}
                       removeSymptom={removeSymptom} updateSymptomColor={updateSymptomColor}
                     />
                   ))}
