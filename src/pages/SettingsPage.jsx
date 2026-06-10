@@ -118,6 +118,7 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
                   maxLength={20}
                 />
                 <button
+                  onPointerDown={e => e.preventDefault()}
                   onClick={handleAddFreeInput}
                   disabled={!input.trim() && !addAnim}
                   className={`px-4 py-2.5 text-sm font-bold rounded-xl${addAnim ? ' add-pop' : ''}`}
