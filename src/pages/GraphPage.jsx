@@ -46,22 +46,27 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
     return d.toISOString().slice(0, 10)
   })()
 
-  const chartData = records
-    .filter(r => {
-      if (cutoff && r.date < cutoff) return false
-      return r.entries.some(e => e.symptomId === selectedId)
-    })
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .map(r => ({
-      date: formatDateShort(r.date),
-      fullDate: r.date,
-      value: r.entries.find(e => e.symptomId === selectedId)?.value ?? null,
+  const treatmentInRange = treatmentDates.filter(d => !cutoff || d >= cutoff)
+
+  const chartData = [
+    ...new Set([
+      ...records
+        .filter(r => {
+          if (cutoff && r.date < cutoff) return false
+          return r.entries.some(e => e.symptomId === selectedId)
+        })
+        .map(r => r.date),
+      ...treatmentInRange,
+    ])
+  ]
+    .sort()
+    .map(d => ({
+      date: formatDateShort(d),
+      fullDate: d,
+      value: records.find(r => r.date === d)?.entries.find(e => e.symptomId === selectedId)?.value ?? null,
     }))
 
-  const visibleTreatments = treatmentDates
-    .filter(d => !cutoff || d >= cutoff)
-    .map(d => formatDateShort(d))
-    .filter(label => chartData.some(c => c.date === label))
+  const visibleTreatments = treatmentInRange.map(d => formatDateShort(d))
 
   const allValues = records
     .filter(r => r.entries.some(e => e.symptomId === selectedId))

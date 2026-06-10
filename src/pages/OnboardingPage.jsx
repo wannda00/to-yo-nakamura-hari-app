@@ -151,6 +151,13 @@ function StepSymptoms({ selected, animating, customInput, setCustomInput, onTogg
         <PrimaryButton onClick={onNext} disabled={selected.size === 0}>
           {selected.size === 0 ? '症状を1つ以上選んでください' : `${selected.size}件の症状で次へ →`}
         </PrimaryButton>
+        <button
+          onClick={onNext}
+          className="w-full mt-3 text-xs text-center py-2"
+          style={{ color: '#a0856e' }}
+        >
+          後で設定から追加する →
+        </button>
       </div>
     </div>
   )
@@ -163,8 +170,10 @@ function StepDone({ count, onComplete }) {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">準備できました！</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
-            <span className="font-bold text-gray-700">{count}件</span>の症状を登録しました。<br />
-            毎日記録して、体調の変化を<br />一緒に確認しましょう。
+            {count > 0
+              ? <><span className="font-bold text-gray-700">{count}件</span>の症状を登録しました。<br />毎日記録して、体調の変化を<br />一緒に確認しましょう。</>
+              : <>症状は設定タブからいつでも<br />追加できます。</>
+            }
           </p>
         </div>
 

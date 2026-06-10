@@ -81,7 +81,6 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
   }, [date])
 
   // date または records が変わったとき表示データを同期
-  // （saveRecord で records が更新されても saved=true を維持するため setSaved を呼ばない）
   useEffect(() => {
     const rec = records.find(r => r.date === date)
     if (rec) {
@@ -91,6 +90,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
       setValues(v)
       setTouched(t)
       setNote(rec.note || '')
+      setSaved(true)
     } else {
       setValues({})
       setTouched(new Set())
@@ -160,7 +160,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
     <div className="flex flex-col min-h-screen pb-6">
       {/* header */}
       <div
-        className="px-4 pt-6 pb-5 sticky top-0 z-10"
+        className="px-4 pt-4 pb-4 sticky top-0 z-10"
         style={{ background: '#3C2E1D' }}
       >
         <div className="flex items-center gap-3">
