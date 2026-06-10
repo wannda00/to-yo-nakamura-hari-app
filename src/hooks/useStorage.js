@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 
-const COLORS = [
+export const COLORS = [
   '#ef4444','#f97316','#eab308','#84cc16','#22c55e',
   '#06b6d4','#6366f1','#ec4899','#14b8a6','#8b5cf6','#f59e0b','#0ea5e9',
 ]
@@ -41,7 +41,28 @@ export function useSymptoms() {
     })
   }, [])
 
-  return { symptoms, addSymptom, removeSymptom }
+  const updateSymptomColor = useCallback((id, color) => {
+    setSymptoms(prev => {
+      const updated = prev.map(s => s.id === id ? { ...s, color } : s)
+      save('symptoms', updated)
+      return updated
+    })
+  }, [])
+
+  const moveSymptom = useCallback((id, dir) => {
+    setSymptoms(prev => {
+      const idx = prev.findIndex(s => s.id === id)
+      if (idx < 0) return prev
+      const newIdx = idx + dir
+      if (newIdx < 0 || newIdx >= prev.length) return prev
+      const updated = [...prev]
+      ;[updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]]
+      save('symptoms', updated)
+      return updated
+    })
+  }, [])
+
+  return { symptoms, addSymptom, removeSymptom, updateSymptomColor, moveSymptom }
 }
 
 export function useRecords() {
@@ -82,12 +103,15 @@ export function exportAllData() {
     exportedAt: new Date().toISOString(),
     symptoms: load('symptoms', []),
     records: load('records', []),
+    treatmentDates: load('treatmentDates', []),
   }
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `症状記録_${new Date().toISOString().slice(0, 10)}.json`
+  const today = new Date()
+  const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
+  a.download = `症状記録_${dateStr}.json`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
@@ -105,6 +129,7 @@ export function importAllData(file) {
         }
         save('symptoms', data.symptoms)
         save('records', data.records)
+        if (Array.isArray(data.treatmentDates)) save('treatmentDates', data.treatmentDates)
         resolve({ symptoms: data.symptoms.length, records: data.records.length })
       } catch {
         reject(new Error('ファイルの形式が正しくありません'))

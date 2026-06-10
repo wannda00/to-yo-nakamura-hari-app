@@ -84,6 +84,7 @@ function StepSymptoms({ selected, animating, customInput, setCustomInput, onTogg
             placeholder="一覧にない症状を入力..."
             maxLength={20}
             className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#3C2E1D] placeholder:text-gray-300"
+            style={{ fontSize: '16px' }}
           />
           <button
             onClick={onAddCustom}

@@ -15,9 +15,10 @@ export default function App() {
   const [tab, setTab] = useState('log')
   const [onboarded, setOnboarded] = useState(() => !!localStorage.getItem('onboarded'))
   const [hasUnsaved, setHasUnsaved] = useState(false)
+  const [requestedDate, setRequestedDate] = useState(null)
   const scrollContainerRef = useRef(null)
   const logSaveRef = useRef(null)
-  const { symptoms, addSymptom, removeSymptom } = useSymptoms()
+  const { symptoms, addSymptom, removeSymptom, updateSymptomColor, moveSymptom } = useSymptoms()
   const { records, saveRecord } = useRecords()
   const { treatmentDates, toggleTreatmentDate } = useTreatmentDates()
 
@@ -26,6 +27,11 @@ export default function App() {
       logSaveRef.current?.()
     }
     setTab(newTab)
+  }
+
+  function goToLogDate(date) {
+    setRequestedDate(date)
+    handleTabChange('log')
   }
 
   if (!onboarded) {
@@ -56,7 +62,12 @@ export default function App() {
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {tab === 'graph' ? (
           <div className="flex-1 min-h-0 max-w-[640px] w-full mx-auto flex flex-col">
-            <GraphPage symptoms={symptoms} records={records} treatmentDates={treatmentDates} />
+            <GraphPage
+              symptoms={symptoms}
+              records={records}
+              treatmentDates={treatmentDates}
+              onGoToLog={goToLogDate}
+            />
           </div>
         ) : (
           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
@@ -71,6 +82,8 @@ export default function App() {
                   toggleTreatmentDate={toggleTreatmentDate}
                   onUnsavedChange={setHasUnsaved}
                   saveRef={logSaveRef}
+                  requestedDate={requestedDate}
+                  onRequestedDateConsumed={() => setRequestedDate(null)}
                 />
               )}
               {tab === 'settings' && (
@@ -78,6 +91,8 @@ export default function App() {
                   symptoms={symptoms}
                   addSymptom={addSymptom}
                   removeSymptom={removeSymptom}
+                  updateSymptomColor={updateSymptomColor}
+                  moveSymptom={moveSymptom}
                 />
               )}
               <p className="text-center text-[10px] text-gray-300 pb-3 pt-1">

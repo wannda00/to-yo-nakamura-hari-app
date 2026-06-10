@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { exportAllData, importAllData } from '../hooks/useStorage'
+import { exportAllData, importAllData, COLORS } from '../hooks/useStorage'
 
 const PRESET_SYMPTOMS = [
   '肩こり', '腰痛', '膝痛', '頭痛', '便秘', '下痢しやすい', '鼻炎', '眼精疲労',
@@ -8,9 +8,10 @@ const PRESET_SYMPTOMS = [
   'イライラする', '落ち込みやすい',
 ]
 
-export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
+export default function SettingsPage({ symptoms, addSymptom, removeSymptom, updateSymptomColor, moveSymptom }) {
   const [input, setInput] = useState('')
   const [confirmId, setConfirmId] = useState(null)
+  const [colorPickerId, setColorPickerId] = useState(null)
   const [importStatus, setImportStatus] = useState(null)
   const [animating, setAnimating] = useState(new Set())
   const [addAnim, setAddAnim] = useState(false)
@@ -64,15 +65,15 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
     <div className="flex flex-col min-h-screen pb-20">
       <div className="px-4 py-3 space-y-4">
 
-        {/* ── 症状を追加 ── */}
+        {/* ── 症状一覧 ── */}
         <section>
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-3 pt-3 pb-3 space-y-3">
-            {/* presets — all always shown */}
             <div>
               <p className="text-sm font-semibold text-gray-700 mb-1.5">症状一覧</p>
               <div className="flex flex-wrap gap-1.5">
                 {PRESET_SYMPTOMS.map(p => {
-                  const isAdded = symptoms.some(s => s.name === p)
+                  const sym = symptoms.find(s => s.name === p)
+                  const isAdded = !!sym
                   const isAnim = animating.has(p)
                   return (
                     <button
@@ -86,11 +87,10 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
                         cursor: 'pointer',
                         border: 'none',
                         transform: isAnim ? 'scale(0.88)' : 'scale(1)',
-                        transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, box-shadow 0.2s, color 0.2s',
-                        background: isAdded ? '#3C2E1D' : '#f9fafb',
-                        color: isAdded ? 'white' : '#6b7280',
-                        boxShadow: isAdded ? '0 2px 10px rgba(102,126,234,0.4)' : 'none',
-                        outline: isAdded ? 'none' : '1.5px solid #e5e7eb',
+                        transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, color 0.2s',
+                        background: isAdded ? `${sym.color}1a` : '#f9fafb',
+                        color: isAdded ? sym.color : '#6b7280',
+                        outline: isAdded ? `1.5px solid ${sym.color}55` : '1.5px solid #e5e7eb',
                       }}
                     >
                       {isAdded ? `✓ ${p}` : `＋ ${p}`}
@@ -111,10 +111,10 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
                         cursor: 'pointer',
                         border: 'none',
                         transform: isAnim ? 'scale(0.88)' : 'scale(1)',
-                        transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, box-shadow 0.2s, color 0.2s',
-                        background: '#3C2E1D',
-                        color: 'white',
-                        boxShadow: '0 2px 10px rgba(102,126,234,0.4)',
+                        transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, color 0.2s',
+                        background: `${s.color}1a`,
+                        color: s.color,
+                        outline: `1.5px solid ${s.color}55`,
                       }}
                     >
                       ✓ {s.name}
@@ -124,7 +124,7 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
               </div>
             </div>
 
-            {/* free input */}
+            {/* 自由に入力 */}
             <div>
               <p className="text-sm font-semibold text-gray-700 mb-1.5">自由に入力</p>
               <div className="flex gap-2">
@@ -157,55 +157,86 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
           </div>
         </section>
 
-        {/* ── 登録済み症状 ── */}
-        <section>
-          <p className="text-sm font-bold text-gray-600 mb-2">
-            登録済みの症状 ({symptoms.length}件)
-          </p>
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            {symptoms.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-gray-300 gap-2">
-                <span className="text-sm text-gray-400">症状がまだ登録されていません</span>
-                <span className="text-xs text-gray-300">上のフォームから追加してください</span>
-              </div>
-            ) : (
-              symptoms.map(s => (
-                <div
-                  key={s.id}
-                  className="flex items-center justify-between px-4 py-3.5 border-b border-gray-50 last:border-0"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm" style={{ backgroundColor: s.color }} />
-                    <span className="text-sm font-medium text-gray-800">{s.name}</span>
-                  </div>
-                  {confirmId === s.id ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">削除しますか？</span>
-                      <button
-                        onClick={() => { removeSymptom(s.id); setConfirmId(null) }}
-                        className="text-xs text-red-500 font-bold px-2.5 py-1 bg-red-50 border border-red-200 rounded-lg"
-                      >削除</button>
-                      <button
-                        onClick={() => setConfirmId(null)}
-                        className="text-xs text-gray-500 px-2.5 py-1 border border-gray-200 rounded-lg"
-                      >戻る</button>
-                    </div>
-                  ) : (
+        {/* ── 登録済み症状（色・並び替え・削除） ── */}
+        {symptoms.length > 0 && (
+          <section>
+            <p className="text-sm font-bold text-gray-600 mb-2">
+              登録済み（{symptoms.length}件）
+            </p>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              {symptoms.map((s, idx) => (
+                <div key={s.id} className="border-b border-gray-50 last:border-0">
+                  <div className="flex items-center px-4 py-3 gap-3">
+                    {/* 色変更ボタン */}
                     <button
-                      onClick={() => setConfirmId(s.id)}
-                      className="text-gray-300 hover:text-red-400 transition-colors p-1 text-base"
-                    >✕</button>
+                      onPointerDown={e => e.preventDefault()}
+                      onClick={() => setColorPickerId(colorPickerId === s.id ? null : s.id)}
+                      className="flex-shrink-0 w-5 h-5 rounded-full transition-all active:scale-90"
+                      style={{
+                        background: s.color,
+                        boxShadow: colorPickerId === s.id
+                          ? `0 0 0 2px white, 0 0 0 4px ${s.color}`
+                          : '0 1px 3px rgba(0,0,0,0.2)',
+                      }}
+                    />
+                    <span className="flex-1 text-sm font-medium text-gray-800">{s.name}</span>
+                    {/* 並び替え */}
+                    <div className="flex">
+                      <button
+                        onClick={() => moveSymptom(s.id, -1)}
+                        disabled={idx === 0}
+                        className="w-7 h-7 flex items-center justify-center text-xs text-gray-400 disabled:opacity-20 rounded-lg active:bg-gray-100"
+                      >↑</button>
+                      <button
+                        onClick={() => moveSymptom(s.id, 1)}
+                        disabled={idx === symptoms.length - 1}
+                        className="w-7 h-7 flex items-center justify-center text-xs text-gray-400 disabled:opacity-20 rounded-lg active:bg-gray-100"
+                      >↓</button>
+                    </div>
+                    {/* 削除 */}
+                    {confirmId === s.id ? (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => { removeSymptom(s.id); setConfirmId(null); setColorPickerId(null) }}
+                          className="text-xs text-red-500 font-bold px-2.5 py-1 bg-red-50 border border-red-200 rounded-lg"
+                        >削除</button>
+                        <button
+                          onClick={() => setConfirmId(null)}
+                          className="text-xs text-gray-500 px-2.5 py-1 border border-gray-200 rounded-lg"
+                        >戻る</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setConfirmId(s.id); setColorPickerId(null) }}
+                        className="text-gray-300 hover:text-red-400 transition-colors p-1 text-base"
+                      >✕</button>
+                    )}
+                  </div>
+                  {/* カラーピッカー */}
+                  {colorPickerId === s.id && (
+                    <div className="px-4 py-2.5 flex flex-wrap gap-2.5" style={{ background: '#fafafa' }}>
+                      {COLORS.map(c => (
+                        <button
+                          key={c}
+                          onPointerDown={e => e.preventDefault()}
+                          onClick={() => { updateSymptomColor(s.id, c); setColorPickerId(null) }}
+                          className="w-7 h-7 rounded-full transition-all active:scale-90"
+                          style={{
+                            background: c,
+                            boxShadow: s.color === c ? `0 0 0 2px white, 0 0 0 4px ${c}` : 'none',
+                          }}
+                        />
+                      ))}
+                    </div>
                   )}
                 </div>
-              ))
-            )}
-          </div>
-          {symptoms.length > 0 && (
+              ))}
+            </div>
             <p className="text-xs text-gray-400 text-center mt-2">
               削除しても過去の記録データは残ります
             </p>
-          )}
-        </section>
+          </section>
+        )}
 
         {/* ── データのバックアップ ── */}
         <section>
