@@ -65,7 +65,7 @@ function SymptomCard({ symptom, value, touched, onChange }) {
   )
 }
 
-export default function LogPage({ symptoms, records, saveRecord, onGoToSettings, treatmentDates, toggleTreatmentDate }) {
+export default function LogPage({ symptoms, records, saveRecord, onGoToSettings, treatmentDates, toggleTreatmentDate, onUnsavedChange }) {
   const [date, setDate] = useState(todayStr())
   const [values, setValues] = useState({})
   const [touched, setTouched] = useState(new Set())
@@ -73,6 +73,10 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
   const [saved, setSaved] = useState(false)
   const [saveKey, setSaveKey] = useState(0)
   const [showToast, setShowToast] = useState(false)
+
+  useEffect(() => {
+    onUnsavedChange?.(touched.size > 0 && !saved)
+  }, [touched.size, saved])
 
   // date が変わったときだけ保存状態をリセット
   useEffect(() => {

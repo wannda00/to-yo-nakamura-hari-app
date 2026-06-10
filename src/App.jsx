@@ -14,9 +14,25 @@ const TABS = [
 export default function App() {
   const [tab, setTab] = useState('log')
   const [onboarded, setOnboarded] = useState(() => !!localStorage.getItem('onboarded'))
+  const [hasUnsaved, setHasUnsaved] = useState(false)
+  const [pendingTab, setPendingTab] = useState(null)
   const { symptoms, addSymptom, removeSymptom } = useSymptoms()
   const { records, saveRecord } = useRecords()
   const { treatmentDates, toggleTreatmentDate } = useTreatmentDates()
+
+  function handleTabChange(newTab) {
+    if (tab === 'log' && hasUnsaved && newTab !== 'log') {
+      setPendingTab(newTab)
+    } else {
+      setTab(newTab)
+    }
+  }
+
+  function confirmLeave() {
+    setTab(pendingTab)
+    setPendingTab(null)
+    setHasUnsaved(false)
+  }
 
   if (!onboarded) {
     return (
@@ -32,20 +48,17 @@ export default function App() {
       {/* Brand header */}
       <header className="flex-shrink-0 bg-white border-b border-gray-100">
         <button
-          onClick={() => setTab('log')}
+          onClick={() => handleTabChange('log')}
           className="px-4 py-2 flex items-center active:opacity-70 transition-opacity"
         >
-          <span
-            className="font-black text-[18px] tracking-tight"
-            style={{ color: '#3C2E1D' }}
-          >
+          <span className="font-black text-[18px] tracking-tight" style={{ color: '#3C2E1D' }}>
             MIERU
           </span>
           <span className="text-[11px] font-medium ml-2" style={{ color: '#7a5c42' }}>-症状手帳-</span>
         </button>
       </header>
 
-      {/* Page content — graph tab: no-scroll flex fill; others: scrollable */}
+      {/* Page content */}
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {tab === 'graph' ? (
           <div className="flex-1 min-h-0 max-w-[640px] w-full mx-auto flex flex-col">
@@ -59,9 +72,10 @@ export default function App() {
                   symptoms={symptoms}
                   records={records}
                   saveRecord={saveRecord}
-                  onGoToSettings={() => setTab('settings')}
+                  onGoToSettings={() => handleTabChange('settings')}
                   treatmentDates={treatmentDates}
                   toggleTreatmentDate={toggleTreatmentDate}
+                  onUnsavedChange={setHasUnsaved}
                 />
               )}
               {tab === 'settings' && (
@@ -84,8 +98,8 @@ export default function App() {
         {TABS.map(t => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
-            className="flex-1 flex items-center justify-center py-4 active:opacity-60 transition-opacity"
+            onClick={() => handleTabChange(t.id)}
+            className="flex-1 flex items-center justify-center py-4 active:opacity-60 transition-opacity relative"
           >
             <span
               className="text-base font-bold px-5 py-2 rounded-full transition-all"
@@ -94,9 +108,52 @@ export default function App() {
                 : { color: '#a0856e' }
               }
             >{t.label}</span>
+            {t.id === 'log' && hasUnsaved && (
+              <span
+                className="absolute top-3 right-[calc(50%-28px)]"
+                style={{
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: '#ef4444',
+                  boxShadow: '0 0 0 2px #f5ede4',
+                }}
+              />
+            )}
           </button>
         ))}
       </nav>
+
+      {/* 未保存警告モーダル */}
+      {pendingTab && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ background: 'rgba(0,0,0,0.4)' }}
+          onClick={() => setPendingTab(null)}
+        >
+          <div
+            className="w-full max-w-[640px] bg-white rounded-t-3xl px-5 pt-6 pb-10"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
+            <h2 className="text-base font-bold text-gray-800 mb-1">保存されていない記録があります</h2>
+            <p className="text-sm text-gray-400 mb-6">このまま移動すると、入力した内容が失われます。</p>
+            <div className="space-y-2.5">
+              <button
+                onClick={() => setPendingTab(null)}
+                className="w-full py-3.5 rounded-2xl font-bold text-white text-[15px]"
+                style={{ background: '#3C2E1D' }}
+              >
+                戻って保存する
+              </button>
+              <button
+                onClick={confirmLeave}
+                className="w-full py-3 rounded-2xl font-semibold text-gray-500 text-sm bg-gray-100"
+              >
+                保存せずに移動
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
