@@ -62,15 +62,15 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
 
   return (
     <div className="flex flex-col min-h-screen pb-20">
-      <div className="px-4 py-4 space-y-5">
+      <div className="px-4 py-3 space-y-4">
 
         {/* ── 症状を追加 ── */}
         <section>
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 pt-4 pb-5 space-y-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-3 pt-3 pb-3 space-y-3">
             {/* presets — all always shown */}
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-2">症状一覧</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="text-sm font-semibold text-gray-700 mb-1.5">症状一覧</p>
+              <div className="flex flex-wrap gap-1.5">
                 {PRESET_SYMPTOMS.map(p => {
                   const isAdded = symptoms.some(s => s.name === p)
                   const isAnim = animating.has(p)
@@ -79,7 +79,7 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
                       key={p}
                       onClick={() => handlePresetClick(p)}
                       style={{
-                        padding: '6px 12px',
+                        padding: '5px 11px',
                         borderRadius: 9999,
                         fontSize: 14,
                         fontWeight: 600,
@@ -104,7 +104,7 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
                       key={s.id}
                       onClick={() => handlePresetClick(s.name)}
                       style={{
-                        padding: '6px 12px',
+                        padding: '5px 11px',
                         borderRadius: 9999,
                         fontSize: 14,
                         fontWeight: 600,
@@ -126,7 +126,7 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom }) {
 
             {/* free input */}
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-2">自由に入力</p>
+              <p className="text-sm font-semibold text-gray-700 mb-1.5">自由に入力</p>
               <div className="flex gap-2">
                 <input
                   type="text"
