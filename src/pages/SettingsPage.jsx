@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { exportAllData, importAllData, COLORS } from '../hooks/useStorage'
 import {
   DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors
@@ -15,6 +15,8 @@ const PRESET_SYMPTOMS = [
   'イライラする', '落ち込みやすい',
 ]
 
+const DELETE_W = 76
+
 function DragHandle({ listeners, attributes }) {
   return (
     <button
@@ -25,92 +27,172 @@ function DragHandle({ listeners, attributes }) {
       style={{ touchAction: 'none' }}
     >
       <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-        <circle cx="4.5" cy="3" r="1.3"/>
-        <circle cx="9.5" cy="3" r="1.3"/>
-        <circle cx="4.5" cy="7" r="1.3"/>
-        <circle cx="9.5" cy="7" r="1.3"/>
-        <circle cx="4.5" cy="11" r="1.3"/>
-        <circle cx="9.5" cy="11" r="1.3"/>
+        <circle cx="4.5" cy="3"  r="1.3"/><circle cx="9.5" cy="3"  r="1.3"/>
+        <circle cx="4.5" cy="7"  r="1.3"/><circle cx="9.5" cy="7"  r="1.3"/>
+        <circle cx="4.5" cy="11" r="1.3"/><circle cx="9.5" cy="11" r="1.3"/>
       </svg>
     </button>
   )
 }
 
-function SortableSymptomRow({ s, confirmId, colorPickerId, setConfirmId, setColorPickerId, removeSymptom, updateSymptomColor }) {
+function SortableSymptomRow({ s, openSwipeId, setOpenSwipeId, colorPickerId, setColorPickerId, removeSymptom, updateSymptomColor }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id })
+  const isOpen = openSwipeId === s.id
+  const contentRef = useRef(null)
+  const ptr = useRef(null) // { startX, startY, startOffset, dir, liveX }
+
+  // Animate to settled position when isOpen changes externally
+  useEffect(() => {
+    const el = contentRef.current
+    if (!el || ptr.current?.dir === 'h') return
+    el.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+    el.style.transform = `translateX(${isOpen ? -DELETE_W : 0}px)`
+  }, [isOpen])
+
+  function pDown(e) {
+    if (isDragging) return
+    ptr.current = {
+      startX: e.clientX, startY: e.clientY,
+      startOffset: isOpen ? -DELETE_W : 0,
+      dir: null, liveX: isOpen ? -DELETE_W : 0,
+    }
+  }
+
+  function pMove(e) {
+    if (isDragging) return
+    const p = ptr.current
+    if (!p || p.dir === 'v') return
+    const dx = e.clientX - p.startX
+    const dy = e.clientY - p.startY
+
+    if (p.dir === null) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return
+      p.dir = Math.abs(dy) >= Math.abs(dx) ? 'v' : 'h'
+      if (p.dir === 'v') return
+    }
+
+    if (p.dir === 'h' && contentRef.current) {
+      e.stopPropagation()
+      const clamped = Math.min(0, Math.max(-DELETE_W, p.startOffset + dx))
+      p.liveX = clamped
+      contentRef.current.style.transform = `translateX(${clamped}px)`
+      contentRef.current.style.transition = 'none'
+    }
+  }
+
+  function pUp() {
+    if (isDragging) return
+    const p = ptr.current
+    ptr.current = null
+    if (!p || p.dir !== 'h') return
+
+    const snap = p.liveX < -DELETE_W * 0.4
+    if (contentRef.current) {
+      contentRef.current.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      contentRef.current.style.transform = `translateX(${snap ? -DELETE_W : 0}px)`
+    }
+    if (snap) {
+      setOpenSwipeId(s.id)
+      setColorPickerId(null)
+    } else {
+      setOpenSwipeId(prev => prev === s.id ? null : prev)
+    }
+  }
+
+  function pCancel() {
+    const p = ptr.current
+    ptr.current = null
+    if (!p || p.dir !== 'h') return
+    if (contentRef.current) {
+      contentRef.current.style.transition = 'transform 0.22s ease'
+      contentRef.current.style.transform = `translateX(${isOpen ? -DELETE_W : 0}px)`
+    }
+  }
 
   return (
     <div
       ref={setNodeRef}
       style={{
         transform: CSS.Transform.toString(transform),
-        transition,
+        transition: isDragging ? undefined : transition,
         opacity: isDragging ? 0.45 : 1,
-        zIndex: isDragging ? 10 : 'auto',
         position: 'relative',
-        background: isDragging ? '#fdf8f3' : 'white',
+        overflow: 'hidden',
+        background: 'white',
       }}
       className="border-b border-gray-50 last:border-0"
     >
-      <div className="flex items-center px-3 py-3 gap-2">
-        <DragHandle listeners={listeners} attributes={attributes} />
-        {/* 色変更ボタン */}
+      {/* 削除ゾーン（背景） */}
+      <div
+        className="absolute right-0 inset-y-0 flex items-center justify-center"
+        style={{ width: DELETE_W, background: '#ef4444' }}
+      >
         <button
-          onPointerDown={e => e.preventDefault()}
-          onClick={() => setColorPickerId(colorPickerId === s.id ? null : s.id)}
-          className="flex-shrink-0 w-5 h-5 rounded-full transition-all active:scale-90"
-          style={{
-            background: s.color,
-            boxShadow: colorPickerId === s.id
-              ? `0 0 0 2px white, 0 0 0 4px ${s.color}`
-              : '0 1px 3px rgba(0,0,0,0.2)',
+          onPointerDown={e => {
+            e.stopPropagation()
+            removeSymptom(s.id)
+            setOpenSwipeId(null)
+            setColorPickerId(null)
           }}
-        />
-        <span className="flex-1 text-sm font-medium text-gray-800">{s.name}</span>
-        {/* 削除 */}
-        {confirmId === s.id ? (
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => { removeSymptom(s.id); setConfirmId(null); setColorPickerId(null) }}
-              className="text-xs text-red-500 font-bold px-2.5 py-1 bg-red-50 border border-red-200 rounded-lg"
-            >削除</button>
-            <button
-              onClick={() => setConfirmId(null)}
-              className="text-xs text-gray-500 px-2.5 py-1 border border-gray-200 rounded-lg"
-            >戻る</button>
-          </div>
-        ) : (
+          className="w-full h-full flex items-center justify-center text-white text-sm font-bold"
+        >削除</button>
+      </div>
+
+      {/* スライドするメインコンテンツ */}
+      <div
+        ref={contentRef}
+        style={{ background: isDragging ? '#fdf8f3' : 'white', touchAction: 'pan-y', position: 'relative', zIndex: 1 }}
+        onPointerDown={pDown}
+        onPointerMove={pMove}
+        onPointerUp={pUp}
+        onPointerCancel={pCancel}
+      >
+        <div className="flex items-center px-3 py-3 gap-2">
+          <DragHandle listeners={listeners} attributes={attributes} />
+          {/* 色変更ボタン */}
           <button
-            onClick={() => { setConfirmId(s.id); setColorPickerId(null) }}
-            className="text-gray-300 hover:text-red-400 transition-colors p-1 text-base"
-          >✕</button>
+            onPointerDown={e => e.preventDefault()}
+            onClick={() => {
+              setColorPickerId(colorPickerId === s.id ? null : s.id)
+              setOpenSwipeId(null)
+            }}
+            className="flex-shrink-0 w-5 h-5 rounded-full transition-all active:scale-90"
+            style={{
+              background: s.color,
+              boxShadow: colorPickerId === s.id
+                ? `0 0 0 2px white, 0 0 0 4px ${s.color}`
+                : '0 1px 3px rgba(0,0,0,0.2)',
+            }}
+          />
+          <span className="flex-1 text-sm font-medium text-gray-800">{s.name}</span>
+          {/* スワイプヒント */}
+          {!isOpen && (
+            <span className="text-[10px] text-gray-300 pr-1">← 削除</span>
+          )}
+        </div>
+        {/* カラーピッカー */}
+        {colorPickerId === s.id && (
+          <div className="px-4 py-2.5 flex flex-wrap gap-2.5" style={{ background: '#fafafa' }}>
+            {COLORS.map(c => (
+              <button
+                key={c}
+                onPointerDown={e => e.preventDefault()}
+                onClick={() => { updateSymptomColor(s.id, c); setColorPickerId(null) }}
+                className="w-7 h-7 rounded-full transition-all active:scale-90"
+                style={{ background: c, boxShadow: s.color === c ? `0 0 0 2px white, 0 0 0 4px ${c}` : 'none' }}
+              />
+            ))}
+          </div>
         )}
       </div>
-      {/* カラーピッカー */}
-      {colorPickerId === s.id && (
-        <div className="px-4 py-2.5 flex flex-wrap gap-2.5" style={{ background: '#fafafa' }}>
-          {COLORS.map(c => (
-            <button
-              key={c}
-              onPointerDown={e => e.preventDefault()}
-              onClick={() => { updateSymptomColor(s.id, c); setColorPickerId(null) }}
-              className="w-7 h-7 rounded-full transition-all active:scale-90"
-              style={{
-                background: c,
-                boxShadow: s.color === c ? `0 0 0 2px white, 0 0 0 4px ${c}` : 'none',
-              }}
-            />
-          ))}
-        </div>
-      )}
     </div>
   )
 }
 
 export default function SettingsPage({ symptoms, addSymptom, removeSymptom, updateSymptomColor, reorderSymptoms }) {
   const [input, setInput] = useState('')
-  const [confirmId, setConfirmId] = useState(null)
   const [colorPickerId, setColorPickerId] = useState(null)
+  const [openSwipeId, setOpenSwipeId] = useState(null)
   const [confirmReset, setConfirmReset] = useState(false)
   const [importStatus, setImportStatus] = useState(null)
   const [animating, setAnimating] = useState(new Set())
@@ -141,21 +223,14 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, upda
   function handlePresetClick(name) {
     triggerAnim(name)
     const existing = symptoms.find(s => s.name === name)
-    if (existing) {
-      removeSymptom(existing.id)
-    } else {
-      addSymptom(name)
-    }
+    if (existing) removeSymptom(existing.id)
+    else addSymptom(name)
   }
 
   function triggerAnim(name) {
     setAnimating(prev => new Set([...prev, name]))
     setTimeout(() => {
-      setAnimating(prev => {
-        const next = new Set(prev)
-        next.delete(name)
-        return next
-      })
+      setAnimating(prev => { const next = new Set(prev); next.delete(name); return next })
     }, 350)
   }
 
@@ -192,12 +267,8 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, upda
                       key={p}
                       onClick={() => handlePresetClick(p)}
                       style={{
-                        padding: '5px 11px',
-                        borderRadius: 9999,
-                        fontSize: 14,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        border: 'none',
+                        padding: '5px 11px', borderRadius: 9999, fontSize: 14, fontWeight: 600,
+                        cursor: 'pointer', border: 'none',
                         transform: isAnim ? 'scale(0.88)' : 'scale(1)',
                         transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, color 0.2s',
                         background: isAdded ? `${sym.color}1a` : '#f9fafb',
@@ -209,46 +280,34 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, upda
                     </button>
                   )
                 })}
-                {symptoms.filter(s => !PRESET_SYMPTOMS.includes(s.name)).map(s => {
-                  const isAnim = animating.has(s.name)
-                  return (
-                    <button
-                      key={s.id}
-                      onClick={() => handlePresetClick(s.name)}
-                      style={{
-                        padding: '5px 11px',
-                        borderRadius: 9999,
-                        fontSize: 14,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        border: 'none',
-                        transform: isAnim ? 'scale(0.88)' : 'scale(1)',
-                        transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, color 0.2s',
-                        background: `${s.color}1a`,
-                        color: s.color,
-                        outline: `1.5px solid ${s.color}55`,
-                      }}
-                    >
-                      ✓ {s.name}
-                    </button>
-                  )
-                })}
+                {symptoms.filter(s => !PRESET_SYMPTOMS.includes(s.name)).map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => handlePresetClick(s.name)}
+                    style={{
+                      padding: '5px 11px', borderRadius: 9999, fontSize: 14, fontWeight: 600,
+                      cursor: 'pointer', border: 'none',
+                      transform: animating.has(s.name) ? 'scale(0.88)' : 'scale(1)',
+                      transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, color 0.2s',
+                      background: `${s.color}1a`, color: s.color, outline: `1.5px solid ${s.color}55`,
+                    }}
+                  >
+                    ✓ {s.name}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* 自由に入力 */}
             <div>
               <p className="text-sm font-semibold text-gray-700 mb-1.5">自由に入力</p>
               <div className="flex gap-2">
                 <input
-                  type="text"
-                  value={input}
+                  type="text" value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddFreeInput()}
                   placeholder="例：膝の痛み"
                   className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#3C2E1D] placeholder:text-gray-300"
-                  style={{ fontSize: '16px' }}
-                  maxLength={20}
+                  style={{ fontSize: '16px' }} maxLength={20}
                 />
                 <button
                   onPointerDown={e => e.preventDefault()}
@@ -269,41 +328,31 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, upda
           </div>
         </section>
 
-        {/* ── 登録済み症状（ドラッグ並び替え・色変更・削除） ── */}
+        {/* ── 登録済み症状 ── */}
         {symptoms.length > 0 && (
           <section>
-            <p className="text-sm font-bold text-gray-600 mb-2">
-              登録済み（{symptoms.length}件）
-            </p>
+            <p className="text-sm font-bold text-gray-600 mb-2">登録済み（{symptoms.length}件）</p>
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={symptoms.map(s => s.id)} strategy={verticalListSortingStrategy}>
                   {symptoms.map(s => (
                     <SortableSymptomRow
-                      key={s.id}
-                      s={s}
-                      confirmId={confirmId}
-                      colorPickerId={colorPickerId}
-                      setConfirmId={setConfirmId}
-                      setColorPickerId={setColorPickerId}
-                      removeSymptom={removeSymptom}
-                      updateSymptomColor={updateSymptomColor}
+                      key={s.id} s={s}
+                      openSwipeId={openSwipeId} setOpenSwipeId={setOpenSwipeId}
+                      colorPickerId={colorPickerId} setColorPickerId={setColorPickerId}
+                      removeSymptom={removeSymptom} updateSymptomColor={updateSymptomColor}
                     />
                   ))}
                 </SortableContext>
               </DndContext>
             </div>
-            <p className="text-xs text-gray-400 text-center mt-2">
-              削除しても過去の記録データは残ります
-            </p>
+            <p className="text-xs text-gray-400 text-center mt-2">削除しても過去の記録データは残ります</p>
           </section>
         )}
 
         {/* ── データのバックアップ ── */}
         <section>
-          <p className="text-sm font-bold text-gray-600 mb-2">
-            データのバックアップ
-          </p>
+          <p className="text-sm font-bold text-gray-600 mb-2">データのバックアップ</p>
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="px-4 py-3 border-b" style={{ background: '#fdf8f3', borderColor: '#e8d9cc' }}>
               <p className="text-xs leading-relaxed" style={{ color: '#7a5c42' }}>
@@ -316,13 +365,9 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, upda
                   <p className="text-sm font-bold text-gray-800">エクスポート</p>
                   <p className="text-xs text-gray-500 mt-0.5">全データをJSONファイルで保存</p>
                 </div>
-                <button
-                  onClick={exportAllData}
+                <button onClick={exportAllData}
                   className="flex-shrink-0 px-4 py-2 text-sm font-bold text-white rounded-xl transition-all active:scale-95"
-                  style={{ background: '#3C2E1D' }}
-                >
-                  保存する
-                </button>
+                  style={{ background: '#3C2E1D' }}>保存する</button>
               </div>
             </div>
             <div className="px-4 py-4">
@@ -331,28 +376,15 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, upda
                   <p className="text-sm font-bold text-gray-800">インポート</p>
                   <p className="text-xs text-gray-500 mt-0.5">バックアップファイルからデータを復元</p>
                 </div>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex-shrink-0 px-4 py-2 text-sm font-bold text-gray-700 bg-gray-100 rounded-xl transition-all active:scale-95 hover:bg-gray-200"
-                >
-                  読み込む
-                </button>
+                <button onClick={() => fileInputRef.current?.click()}
+                  className="flex-shrink-0 px-4 py-2 text-sm font-bold text-gray-700 bg-gray-100 rounded-xl transition-all active:scale-95 hover:bg-gray-200">
+                  読み込む</button>
               </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json,application/json"
-                onChange={handleImport}
-                className="hidden"
-              />
-              {importStatus === 'loading' && (
-                <p className="text-xs text-gray-500 mt-2">読み込み中...</p>
-              )}
+              <input ref={fileInputRef} type="file" accept=".json,application/json" onChange={handleImport} className="hidden" />
+              {importStatus === 'loading' && <p className="text-xs text-gray-500 mt-2">読み込み中...</p>}
               {importStatus?.ok === true && (
                 <div className="mt-2 px-3 py-2 bg-green-50 border border-green-200 rounded-xl">
-                  <p className="text-xs text-green-700 font-semibold">
-                    ✓ 復元完了 — 症状 {importStatus.symptoms}件、記録 {importStatus.records}件
-                  </p>
+                  <p className="text-xs text-green-700 font-semibold">✓ 復元完了 — 症状 {importStatus.symptoms}件、記録 {importStatus.records}件</p>
                   <p className="text-xs text-green-600 mt-0.5">まもなく再読み込みします...</p>
                 </div>
               )}
@@ -382,17 +414,13 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, upda
                     }}
                     className="text-xs text-red-500 font-bold px-2.5 py-1.5 bg-red-50 border border-red-200 rounded-xl"
                   >本当に初期化</button>
-                  <button
-                    onClick={() => setConfirmReset(false)}
-                    className="text-xs text-gray-500 px-2.5 py-1.5 border border-gray-200 rounded-xl"
-                  >戻る</button>
+                  <button onClick={() => setConfirmReset(false)}
+                    className="text-xs text-gray-500 px-2.5 py-1.5 border border-gray-200 rounded-xl">戻る</button>
                 </div>
               ) : (
-                <button
-                  onClick={() => setConfirmReset(true)}
+                <button onClick={() => setConfirmReset(true)}
                   className="flex-shrink-0 px-4 py-2 text-sm font-bold rounded-xl border transition-all active:scale-95"
-                  style={{ color: '#ef4444', borderColor: '#fecaca', background: '#fff5f5' }}
-                >
+                  style={{ color: '#ef4444', borderColor: '#fecaca', background: '#fff5f5' }}>
                   初期化
                 </button>
               )}
