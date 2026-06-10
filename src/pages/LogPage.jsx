@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
@@ -74,6 +74,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
   const [saveKey, setSaveKey] = useState(0)
   const [showToast, setShowToast] = useState(false)
   const [pendingDate, setPendingDate] = useState(null)
+  const saveButtonRef = useRef(null)
 
   useEffect(() => {
     onUnsavedChange?.(touched.size > 0 && !saved)
@@ -120,6 +121,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
 
   function requestDateChange(next) {
     if (touched.size > 0 && !saved) {
+      saveButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
       setPendingDate(next)
     } else {
       setDate(next)
@@ -287,6 +289,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
         </div>
 
         <button
+          ref={saveButtonRef}
           key={saveKey}
           onClick={handleSave}
           disabled={touchedCount === 0}

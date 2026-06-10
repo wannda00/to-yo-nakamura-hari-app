@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useSymptoms, useRecords, useTreatmentDates } from './hooks/useStorage'
 import LogPage from './pages/LogPage'
 import GraphPage from './pages/GraphPage'
@@ -16,12 +16,15 @@ export default function App() {
   const [onboarded, setOnboarded] = useState(() => !!localStorage.getItem('onboarded'))
   const [hasUnsaved, setHasUnsaved] = useState(false)
   const [pendingTab, setPendingTab] = useState(null)
+  const scrollContainerRef = useRef(null)
   const { symptoms, addSymptom, removeSymptom } = useSymptoms()
   const { records, saveRecord } = useRecords()
   const { treatmentDates, toggleTreatmentDate } = useTreatmentDates()
 
   function handleTabChange(newTab) {
     if (tab === 'log' && hasUnsaved && newTab !== 'log') {
+      const el = scrollContainerRef.current
+      if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
       setPendingTab(newTab)
     } else {
       setTab(newTab)
@@ -65,7 +68,7 @@ export default function App() {
             <GraphPage symptoms={symptoms} records={records} treatmentDates={treatmentDates} />
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto">
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
             <div className="max-w-[640px] mx-auto w-full">
               {tab === 'log' && (
                 <LogPage
