@@ -225,7 +225,14 @@ export default function GraphPage({ symptoms, records, treatmentDates = [] }) {
                           strokeWidth={1.5}
                           strokeDasharray="3 3"
                           strokeOpacity={0.7}
-                          label={{ value: num, position: 'insideTop', fontSize: 11, fill: '#3C2E1D', fontWeight: 'bold' }}
+                          label={({ viewBox }) => (
+                            <g>
+                              <rect x={viewBox.x - 9} y={viewBox.y + 2} width={18} height={15} fill="white" rx={3} />
+                              <text x={viewBox.x} y={viewBox.y + 13} textAnchor="middle" fontSize={11} fill="#3C2E1D" fontWeight="bold">
+                                {num}
+                              </text>
+                            </g>
+                          )}
                         />
                       ))}
                       <Area
