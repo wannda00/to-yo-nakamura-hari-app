@@ -257,10 +257,10 @@ export default function GraphPage({ symptoms, records, treatmentDates = [], onGo
         </div>
       )}
 
-      {/* ── グラフ（リスト非表示時のみ） ── */}
-      {!showList && (
-        <div className="flex-1 min-h-0 px-3 pb-2">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 h-full flex flex-col p-3">
+      {/* ── グラフ ── */}
+      <div className={showList ? 'flex-shrink-0 px-3 pb-2' : 'flex-1 min-h-0 px-3 pb-2'}
+           style={showList ? { height: 210 } : {}}>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 h-full flex flex-col p-3">
 
             {/* 凡例 */}
             <div className="flex-shrink-0 flex items-center gap-3 mb-2 flex-wrap">
@@ -371,7 +371,6 @@ export default function GraphPage({ symptoms, records, treatmentDates = [], onGo
             </div>
           </div>
         </div>
-      )}
 
       {/* ── 記録一覧 + 改善ランキング ── */}
       {(listData.length > 0 || improvementRanking.length > 0) && (
