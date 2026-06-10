@@ -1,5 +1,12 @@
 import { useState, useRef } from 'react'
 import { exportAllData, importAllData, COLORS } from '../hooks/useStorage'
+import {
+  DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors
+} from '@dnd-kit/core'
+import {
+  SortableContext, useSortable, verticalListSortingStrategy, arrayMove
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 const PRESET_SYMPTOMS = [
   '肩こり', '腰痛', '膝痛', '頭痛', '便秘', '下痢しやすい', '鼻炎', '眼精疲労',
@@ -8,15 +15,119 @@ const PRESET_SYMPTOMS = [
   'イライラする', '落ち込みやすい',
 ]
 
-export default function SettingsPage({ symptoms, addSymptom, removeSymptom, updateSymptomColor, moveSymptom }) {
+function DragHandle({ listeners, attributes }) {
+  return (
+    <button
+      {...listeners}
+      {...attributes}
+      tabIndex={-1}
+      className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded text-gray-300 active:text-gray-500 cursor-grab active:cursor-grabbing"
+      style={{ touchAction: 'none' }}
+    >
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+        <circle cx="4.5" cy="3" r="1.3"/>
+        <circle cx="9.5" cy="3" r="1.3"/>
+        <circle cx="4.5" cy="7" r="1.3"/>
+        <circle cx="9.5" cy="7" r="1.3"/>
+        <circle cx="4.5" cy="11" r="1.3"/>
+        <circle cx="9.5" cy="11" r="1.3"/>
+      </svg>
+    </button>
+  )
+}
+
+function SortableSymptomRow({ s, confirmId, colorPickerId, setConfirmId, setColorPickerId, removeSymptom, updateSymptomColor }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.45 : 1,
+        zIndex: isDragging ? 10 : 'auto',
+        position: 'relative',
+        background: isDragging ? '#fdf8f3' : 'white',
+      }}
+      className="border-b border-gray-50 last:border-0"
+    >
+      <div className="flex items-center px-3 py-3 gap-2">
+        <DragHandle listeners={listeners} attributes={attributes} />
+        {/* 色変更ボタン */}
+        <button
+          onPointerDown={e => e.preventDefault()}
+          onClick={() => setColorPickerId(colorPickerId === s.id ? null : s.id)}
+          className="flex-shrink-0 w-5 h-5 rounded-full transition-all active:scale-90"
+          style={{
+            background: s.color,
+            boxShadow: colorPickerId === s.id
+              ? `0 0 0 2px white, 0 0 0 4px ${s.color}`
+              : '0 1px 3px rgba(0,0,0,0.2)',
+          }}
+        />
+        <span className="flex-1 text-sm font-medium text-gray-800">{s.name}</span>
+        {/* 削除 */}
+        {confirmId === s.id ? (
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => { removeSymptom(s.id); setConfirmId(null); setColorPickerId(null) }}
+              className="text-xs text-red-500 font-bold px-2.5 py-1 bg-red-50 border border-red-200 rounded-lg"
+            >削除</button>
+            <button
+              onClick={() => setConfirmId(null)}
+              className="text-xs text-gray-500 px-2.5 py-1 border border-gray-200 rounded-lg"
+            >戻る</button>
+          </div>
+        ) : (
+          <button
+            onClick={() => { setConfirmId(s.id); setColorPickerId(null) }}
+            className="text-gray-300 hover:text-red-400 transition-colors p-1 text-base"
+          >✕</button>
+        )}
+      </div>
+      {/* カラーピッカー */}
+      {colorPickerId === s.id && (
+        <div className="px-4 py-2.5 flex flex-wrap gap-2.5" style={{ background: '#fafafa' }}>
+          {COLORS.map(c => (
+            <button
+              key={c}
+              onPointerDown={e => e.preventDefault()}
+              onClick={() => { updateSymptomColor(s.id, c); setColorPickerId(null) }}
+              className="w-7 h-7 rounded-full transition-all active:scale-90"
+              style={{
+                background: c,
+                boxShadow: s.color === c ? `0 0 0 2px white, 0 0 0 4px ${c}` : 'none',
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function SettingsPage({ symptoms, addSymptom, removeSymptom, updateSymptomColor, reorderSymptoms }) {
   const [input, setInput] = useState('')
   const [confirmId, setConfirmId] = useState(null)
-  const [confirmReset, setConfirmReset] = useState(false)
   const [colorPickerId, setColorPickerId] = useState(null)
+  const [confirmReset, setConfirmReset] = useState(false)
   const [importStatus, setImportStatus] = useState(null)
   const [animating, setAnimating] = useState(new Set())
   const [addAnim, setAddAnim] = useState(false)
   const fileInputRef = useRef(null)
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+  )
+
+  function handleDragEnd({ active, over }) {
+    if (!over || active.id === over.id) return
+    const oldIndex = symptoms.findIndex(s => s.id === active.id)
+    const newIndex = symptoms.findIndex(s => s.id === over.id)
+    reorderSymptoms(arrayMove(symptoms, oldIndex, newIndex))
+  }
 
   function handleAddFreeInput() {
     const n = input.trim()
@@ -158,80 +269,29 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, upda
           </div>
         </section>
 
-        {/* ── 登録済み症状（色・並び替え・削除） ── */}
+        {/* ── 登録済み症状（ドラッグ並び替え・色変更・削除） ── */}
         {symptoms.length > 0 && (
           <section>
             <p className="text-sm font-bold text-gray-600 mb-2">
               登録済み（{symptoms.length}件）
             </p>
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              {symptoms.map((s, idx) => (
-                <div key={s.id} className="border-b border-gray-50 last:border-0">
-                  <div className="flex items-center px-4 py-3 gap-3">
-                    {/* 色変更ボタン */}
-                    <button
-                      onPointerDown={e => e.preventDefault()}
-                      onClick={() => setColorPickerId(colorPickerId === s.id ? null : s.id)}
-                      className="flex-shrink-0 w-5 h-5 rounded-full transition-all active:scale-90"
-                      style={{
-                        background: s.color,
-                        boxShadow: colorPickerId === s.id
-                          ? `0 0 0 2px white, 0 0 0 4px ${s.color}`
-                          : '0 1px 3px rgba(0,0,0,0.2)',
-                      }}
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={symptoms.map(s => s.id)} strategy={verticalListSortingStrategy}>
+                  {symptoms.map(s => (
+                    <SortableSymptomRow
+                      key={s.id}
+                      s={s}
+                      confirmId={confirmId}
+                      colorPickerId={colorPickerId}
+                      setConfirmId={setConfirmId}
+                      setColorPickerId={setColorPickerId}
+                      removeSymptom={removeSymptom}
+                      updateSymptomColor={updateSymptomColor}
                     />
-                    <span className="flex-1 text-sm font-medium text-gray-800">{s.name}</span>
-                    {/* 並び替え */}
-                    <div className="flex">
-                      <button
-                        onClick={() => moveSymptom(s.id, -1)}
-                        disabled={idx === 0}
-                        className="w-7 h-7 flex items-center justify-center text-xs text-gray-400 disabled:opacity-20 rounded-lg active:bg-gray-100"
-                      >↑</button>
-                      <button
-                        onClick={() => moveSymptom(s.id, 1)}
-                        disabled={idx === symptoms.length - 1}
-                        className="w-7 h-7 flex items-center justify-center text-xs text-gray-400 disabled:opacity-20 rounded-lg active:bg-gray-100"
-                      >↓</button>
-                    </div>
-                    {/* 削除 */}
-                    {confirmId === s.id ? (
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => { removeSymptom(s.id); setConfirmId(null); setColorPickerId(null) }}
-                          className="text-xs text-red-500 font-bold px-2.5 py-1 bg-red-50 border border-red-200 rounded-lg"
-                        >削除</button>
-                        <button
-                          onClick={() => setConfirmId(null)}
-                          className="text-xs text-gray-500 px-2.5 py-1 border border-gray-200 rounded-lg"
-                        >戻る</button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => { setConfirmId(s.id); setColorPickerId(null) }}
-                        className="text-gray-300 hover:text-red-400 transition-colors p-1 text-base"
-                      >✕</button>
-                    )}
-                  </div>
-                  {/* カラーピッカー */}
-                  {colorPickerId === s.id && (
-                    <div className="px-4 py-2.5 flex flex-wrap gap-2.5" style={{ background: '#fafafa' }}>
-                      {COLORS.map(c => (
-                        <button
-                          key={c}
-                          onPointerDown={e => e.preventDefault()}
-                          onClick={() => { updateSymptomColor(s.id, c); setColorPickerId(null) }}
-                          className="w-7 h-7 rounded-full transition-all active:scale-90"
-                          style={{
-                            background: c,
-                            boxShadow: s.color === c ? `0 0 0 2px white, 0 0 0 4px ${c}` : 'none',
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+                  ))}
+                </SortableContext>
+              </DndContext>
             </div>
             <p className="text-xs text-gray-400 text-center mt-2">
               削除しても過去の記録データは残ります
@@ -250,7 +310,6 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, upda
                 スマートフォンの機種変更や故障に備え、定期的にデータをエクスポートして保存しておくことをおすすめします。
               </p>
             </div>
-
             <div className="px-4 py-4 border-b border-gray-50">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -266,7 +325,6 @@ export default function SettingsPage({ symptoms, addSymptom, removeSymptom, upda
                 </button>
               </div>
             </div>
-
             <div className="px-4 py-4">
               <div className="flex items-start justify-between gap-4">
                 <div>

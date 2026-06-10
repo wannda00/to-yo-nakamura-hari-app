@@ -62,7 +62,14 @@ export function useSymptoms() {
     })
   }, [])
 
-  return { symptoms, addSymptom, removeSymptom, updateSymptomColor, moveSymptom }
+  const reorderSymptoms = useCallback((newOrder) => {
+    setSymptoms(() => {
+      save('symptoms', newOrder)
+      return newOrder
+    })
+  }, [])
+
+  return { symptoms, addSymptom, removeSymptom, updateSymptomColor, moveSymptom, reorderSymptoms }
 }
 
 export function useRecords() {

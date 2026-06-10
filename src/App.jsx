@@ -18,7 +18,7 @@ export default function App() {
   const [requestedDate, setRequestedDate] = useState(null)
   const scrollContainerRef = useRef(null)
   const logSaveRef = useRef(null)
-  const { symptoms, addSymptom, removeSymptom, updateSymptomColor, moveSymptom } = useSymptoms()
+  const { symptoms, addSymptom, removeSymptom, updateSymptomColor, moveSymptom, reorderSymptoms } = useSymptoms()
   const { records, saveRecord } = useRecords()
   const { treatmentDates, toggleTreatmentDate } = useTreatmentDates()
 
@@ -92,7 +92,7 @@ export default function App() {
                   addSymptom={addSymptom}
                   removeSymptom={removeSymptom}
                   updateSymptomColor={updateSymptomColor}
-                  moveSymptom={moveSymptom}
+                  reorderSymptoms={reorderSymptoms}
                 />
               )}
               <p className="text-center text-[10px] text-gray-300 pb-3 pt-1">
