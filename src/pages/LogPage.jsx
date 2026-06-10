@@ -40,8 +40,8 @@ function SymptomCard({ symptom, value, touched, onChange }) {
       className="rounded-xl overflow-hidden transition-all duration-200"
       style={{ border: `1.5px solid ${touched ? symptom.color + '45' : '#f3f4f6'}`, background: 'white' }}
     >
-      <div className="px-3 pt-1.5 pb-1.5">
-        <div className="flex items-center justify-between mb-1">
+      <div className="px-3 pt-2.5 pb-2.5">
+        <div className="flex items-center justify-between mb-1.5">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: symptom.color }} />
             <span className="font-semibold text-gray-800 text-sm">{symptom.name}</span>
