@@ -29,6 +29,34 @@ function trendLabel(v) {
   return v > 0 ? `▲+${v.toFixed(1)}` : v < 0 ? `▼${v.toFixed(1)}` : '→±0'
 }
 
+function RankingCard({ ranking, range }) {
+  const rangeLabel = RANGE_OPTIONS.find(o => o.days === range)?.label ?? '全期間'
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 pt-3 pb-4">
+      <p className="text-xs font-bold text-gray-500 mb-2.5">
+        改善ランキング
+        <span className="ml-1.5 font-normal text-gray-400">（{rangeLabel}）</span>
+      </p>
+      {ranking.map((item, i) => (
+        <div key={item.symptom.id} className="flex items-center gap-2 py-1.5">
+          <span className="text-[11px] font-black w-5 text-right tabular-nums"
+            style={{ color: i === 0 ? '#f59e0b' : i === 1 ? '#9ca3af' : i === 2 ? '#cd7c4e' : '#d1d5db' }}>
+            {i + 1}
+          </span>
+          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: item.symptom.color }} />
+          <span className="flex-1 text-sm text-gray-700 truncate">{item.symptom.name}</span>
+          <span className="text-xs font-bold tabular-nums" style={{ color: trendColor(item.delta) }}>
+            {trendLabel(item.delta)}
+          </span>
+          <span className="text-[10px] w-10 text-right" style={{ color: trendColor(item.delta) }}>
+            {item.delta < 0 ? '改善' : item.delta > 0 ? '悪化' : '変化なし'}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function GraphPage({ symptoms, records, treatmentDates = [], onGoToLog }) {
   const [selectedIds, setSelectedIds] = useState(() => {
     const first = symptoms[0]?.id
@@ -345,111 +373,92 @@ export default function GraphPage({ symptoms, records, treatmentDates = [], onGo
         </div>
       )}
 
-      {/* ── 記録一覧 ── */}
-      {listData.length > 0 && (
+      {/* ── 記録一覧 + 改善ランキング ── */}
+      {(listData.length > 0 || improvementRanking.length > 0) && (
         <div className={showList ? 'flex-1 min-h-0 px-3 pb-3 flex flex-col' : 'flex-shrink-0 px-3 pb-3'}>
-          <button
-            onClick={() => setShowList(v => !v)}
-            className="flex-shrink-0 w-full flex items-center justify-between px-4 py-2 bg-white rounded-2xl shadow-sm border border-gray-100 text-sm font-semibold text-gray-500"
-          >
-            <span>記録一覧（{listData.length}件）</span>
-            <span className="text-[11px] text-gray-400">{showList ? '▲ 閉じる' : '▼ 開く'}</span>
-          </button>
-          {showList && (
-            <div className="flex-1 min-h-0 mt-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-y-auto">
-              {[...listData].reverse().map((d, i) => {
-                const isExpanded = expandedNote === d.fullDate
-                return (
-                  <div key={i} className="border-b border-gray-50 last:border-0">
-                    <div
-                      className="flex items-center px-4 py-2.5 gap-2"
-                      onClick={() => d.note && setExpandedNote(isExpanded ? null : d.fullDate)}
-                      style={{ cursor: d.note ? 'pointer' : 'default' }}
-                    >
-                      {/* 日付 + メモバッジ */}
-                      <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                        <span className="text-sm text-gray-600 flex-shrink-0">{d.fullDate}</span>
-                        {d.note && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0"
-                            style={{ background: isExpanded ? '#3C2E1D18' : '#f3f4f6', color: isExpanded ? '#3C2E1D' : '#9ca3af' }}>
-                            メモ
-                          </span>
-                        )}
-                      </div>
-                      {/* スコア表示 */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {isSingle ? (
-                          <>
-                            <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
-                              <div className="h-full rounded-full" style={{ width: `${((d[`v_${singleSymptom.id}`] ?? 0) / 10) * 100}%`, backgroundColor: singleSymptom.color }} />
-                            </div>
-                            <span className="text-sm font-black w-8 text-right tabular-nums" style={{ color: singleSymptom.color }}>
-                              {d[`v_${singleSymptom.id}`]?.toFixed(1)}
-                            </span>
-                          </>
-                        ) : (
-                          <div className="flex gap-2.5">
-                            {selectedSymptoms.map(s => {
-                              const val = d[`v_${s.id}`]
-                              if (val === null) return null
-                              return (
-                                <span key={s.id} className="flex items-center gap-1">
-                                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: s.color }} />
-                                  <span className="text-xs font-bold tabular-nums" style={{ color: s.color }}>{val.toFixed(1)}</span>
-                                </span>
-                              )
-                            })}
-                          </div>
-                        )}
-                      </div>
-                      {/* 記録ページへ */}
-                      <button
-                        onClick={e => { e.stopPropagation(); onGoToLog?.(d.fullDate) }}
-                        className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full transition-colors text-gray-300 active:text-[#3C2E1D]"
-                        style={{ fontSize: 18 }}
-                      >
-                        ›
-                      </button>
-                    </div>
-                    {d.note && isExpanded && (
-                      <div className="px-4 pb-3 -mt-0.5">
-                        <p className="text-xs leading-relaxed rounded-xl px-3 py-2"
-                          style={{ background: '#fdf8f3', color: '#7a5c42' }}>
-                          {d.note}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+          {listData.length > 0 && (
+            <button
+              onClick={() => setShowList(v => !v)}
+              className="flex-shrink-0 w-full flex items-center justify-between px-4 py-2 bg-white rounded-2xl shadow-sm border border-gray-100 text-sm font-semibold text-gray-500"
+            >
+              <span>記録一覧（{listData.length}件）</span>
+              <span className="text-[11px] text-gray-400">{showList ? '▲ 閉じる' : '▼ 開く'}</span>
+            </button>
+          )}
 
-              {/* ── 改善ランキング ── */}
-              {improvementRanking.length > 0 && (
-                <div className="px-4 pt-3 pb-4" style={{ background: '#fafafa', borderTop: '1px solid #f3f4f6' }}>
-                  <p className="text-xs font-bold text-gray-500 mb-2.5">
-                    改善ランキング
-                    <span className="ml-1.5 font-normal text-gray-400">
-                      （{RANGE_OPTIONS.find(o => o.days === range)?.label ?? '全期間'}）
-                    </span>
-                  </p>
-                  {improvementRanking.map((item, i) => (
-                    <div key={item.symptom.id} className="flex items-center gap-2 py-1.5">
-                      <span className="text-[11px] font-black w-5 text-right tabular-nums"
-                        style={{ color: i === 0 ? '#f59e0b' : i === 1 ? '#9ca3af' : i === 2 ? '#cd7c4e' : '#d1d5db' }}>
-                        {i + 1}
-                      </span>
-                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: item.symptom.color }} />
-                      <span className="flex-1 text-sm text-gray-700 truncate">{item.symptom.name}</span>
-                      <span className="text-xs font-bold tabular-nums" style={{ color: trendColor(item.delta) }}>
-                        {trendLabel(item.delta)}
-                      </span>
-                      <span className="text-[10px] w-10 text-right" style={{ color: trendColor(item.delta) }}>
-                        {item.delta < 0 ? '改善' : item.delta > 0 ? '悪化' : '変化なし'}
-                      </span>
+          {/* リスト開放時：レコード＋ランキングをひとつのスクロール領域に */}
+          {showList && (
+            <div className="flex-1 min-h-0 mt-1 overflow-y-auto flex flex-col gap-2">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+                {[...listData].reverse().map((d, i) => {
+                  const isExpanded = expandedNote === d.fullDate
+                  return (
+                    <div key={i} className="border-b border-gray-50 last:border-0">
+                      <div
+                        className="flex items-center px-4 py-2.5 gap-2"
+                        onClick={() => d.note && setExpandedNote(isExpanded ? null : d.fullDate)}
+                        style={{ cursor: d.note ? 'pointer' : 'default' }}
+                      >
+                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                          <span className="text-sm text-gray-600 flex-shrink-0">{d.fullDate}</span>
+                          {d.note && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0"
+                              style={{ background: isExpanded ? '#3C2E1D18' : '#f3f4f6', color: isExpanded ? '#3C2E1D' : '#9ca3af' }}>
+                              メモ
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {isSingle ? (
+                            <>
+                              <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="h-full rounded-full" style={{ width: `${((d[`v_${singleSymptom.id}`] ?? 0) / 10) * 100}%`, backgroundColor: singleSymptom.color }} />
+                              </div>
+                              <span className="text-sm font-black w-8 text-right tabular-nums" style={{ color: singleSymptom.color }}>
+                                {d[`v_${singleSymptom.id}`]?.toFixed(1)}
+                              </span>
+                            </>
+                          ) : (
+                            <div className="flex gap-2.5">
+                              {selectedSymptoms.map(s => {
+                                const val = d[`v_${s.id}`]
+                                if (val === null) return null
+                                return (
+                                  <span key={s.id} className="flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                                    <span className="text-xs font-bold tabular-nums" style={{ color: s.color }}>{val.toFixed(1)}</span>
+                                  </span>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={e => { e.stopPropagation(); onGoToLog?.(d.fullDate) }}
+                          className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full transition-colors text-gray-300 active:text-[#3C2E1D]"
+                          style={{ fontSize: 18 }}
+                        >›</button>
+                      </div>
+                      {d.note && isExpanded && (
+                        <div className="px-4 pb-3 -mt-0.5">
+                          <p className="text-xs leading-relaxed rounded-xl px-3 py-2"
+                            style={{ background: '#fdf8f3', color: '#7a5c42' }}>
+                            {d.note}
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
+                  )
+                })}
+              </div>
+              {improvementRanking.length > 0 && <RankingCard ranking={improvementRanking} range={range} />}
+            </div>
+          )}
+
+          {/* リスト閉鎖時：ランキングをそのまま下に表示 */}
+          {!showList && improvementRanking.length > 0 && (
+            <div className="mt-2">
+              <RankingCard ranking={improvementRanking} range={range} />
             </div>
           )}
         </div>
