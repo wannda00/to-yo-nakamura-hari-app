@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 
 function todayStr() {
-  return new Date().toISOString().slice(0, 10)
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 function formatDateJa(dateStr) {
@@ -132,7 +133,7 @@ export default function LogPage({ symptoms, records, saveRecord, onGoToSettings,
   function shiftDate(delta) {
     const d = new Date(date + 'T00:00:00')
     d.setDate(d.getDate() + delta)
-    const next = d.toISOString().slice(0, 10)
+    const next = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     if (next <= todayStr()) requestDateChange(next)
   }
 
