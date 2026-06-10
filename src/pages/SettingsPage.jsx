@@ -25,7 +25,7 @@ function DragHandle() {
         <circle cx="4.5" cy="7"  r="1.3"/><circle cx="9.5" cy="7"  r="1.3"/>
         <circle cx="4.5" cy="11" r="1.3"/><circle cx="9.5" cy="11" r="1.3"/>
       </svg>
-    </button>
+    </span>
   )
 }
 
